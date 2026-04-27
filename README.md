@@ -1,2 +1,2 @@
-# NextGo
-AI-powered local route planner for personalized city exploration.
+# PlaningGo
+An intelligent travel planning tool for local lifestyle services.
