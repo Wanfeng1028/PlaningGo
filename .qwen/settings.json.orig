@@ -14,7 +14,8 @@
       "Bash(npm ls *)",
       "Bash(node *)",
       "Bash(type *)",
-      "Bash(powershell *)"
+      "Bash(powershell *)",
+      "Bash(git checkout *)"
     ]
   },
   "$version": 4

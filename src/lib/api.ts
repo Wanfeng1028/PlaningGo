@@ -200,24 +200,6 @@ export async function createShareRoom(input: { planId: string; title: string; me
   });
 }
 
-export async function saveMemory(input: { category: string; title: string; detail: string; weight: number }) {
-  return apiJson("/api/memories", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
-}
-
-export async function exportPrivacy() {
-  return apiJson("/api/privacy/export");
-}
-
-export async function createApiKey(input: { name: string; scopes: string[] }) {
-  return apiJson("/api/developer/api-keys", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
-}
-
 // ── Profile: 人物画像 ──
 
 export async function getProfileBundle(): Promise<ProfileBundle> {
@@ -317,6 +299,10 @@ export async function markNotificationRead(id: string) {
   return apiJson(`/api/notifications/${id}/read`, { method: "PATCH" });
 }
 
+export async function markAllNotificationsRead() {
+  return apiJson("/api/notifications/read-all", { method: "POST" });
+}
+
 export async function deleteNotification(id: string) {
   return apiJson(`/api/notifications/${id}`, { method: "DELETE" });
 }
@@ -346,7 +332,8 @@ export async function updatePermissions(input: Partial<PermissionSettings>) {
 }
 
 export async function getSessions(): Promise<SessionInfo[]> {
-  return apiJson<SessionInfo[]>("/api/auth/sessions");
+  const res = await apiJson<{ sessions: SessionInfo[] } | SessionInfo[]>("/api/auth/sessions");
+  return Array.isArray(res) ? res : res.sessions ?? [];
 }
 
 export async function revokeSession(id: string) {
@@ -357,14 +344,29 @@ export async function clearMemory() {
   return apiJson("/api/privacy/memory", { method: "DELETE" });
 }
 
+export async function exportPrivacy() {
+  return apiJson("/api/privacy/export", { method: "POST" });
+}
+
 export async function deleteAccount() {
   return apiJson("/api/privacy/account", { method: "DELETE" });
 }
 
+export async function updateAccount(input: { displayName?: string; city?: string; startPoint?: string }) {
+  return apiJson("/api/account", {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+
 // ── Profile: 开发者模式 ──
 
-export async function getDeveloperDashboard(): Promise<Record<string, number>> {
-  return apiJson<Record<string, number>>("/api/developer/dashboard");
+export async function getDeveloperDashboard(): Promise<{
+  metrics: Array<{ label: string; value: string }>;
+  apiKeys: ApiKeyInfo[];
+  webhooks: WebhookInfo[];
+}> {
+  return apiJson("/api/developer/dashboard");
 }
 
 export async function listApiKeys(): Promise<ApiKeyInfo[]> {

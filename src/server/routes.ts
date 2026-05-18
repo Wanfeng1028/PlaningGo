@@ -23,11 +23,6 @@ import {
   cancelAction,
 } from "./services/store";
 
-const permissionSchema = z.object({
-  key: z.string(),
-  allowed: z.boolean(),
-});
-
 export async function registerRoutes(app: FastifyInstance) {
   // ── 注册模块化路由 ──
   await import("./routes/auth.js").then((m) => m.registerAuthRoutes(app));
@@ -75,13 +70,6 @@ export async function registerRoutes(app: FastifyInstance) {
     ...demoProfile,
     ...(request.body as object),
   }));
-
-  app.get("/api/profile/demo/permissions", async () => listPermissions());
-
-  app.patch("/api/profile/demo/permissions", async (request) => {
-    const input = permissionSchema.parse(request.body);
-    return setPermission(input.key, input.allowed);
-  });
 
   app.get("/api/mock/pois", async () => ({
     city: "杭州",
@@ -270,80 +258,17 @@ export async function registerRoutes(app: FastifyInstance) {
     return next;
   });
 
-  app.get("/api/memories", async () => ({ items: listMemories() }));
 
-  app.post("/api/memories", async (request) => {
-    const input = z
-      .object({
-        category: z.enum(["family", "food", "route", "collaboration"]),
-        title: z.string(),
-        detail: z.string(),
-        weight: z.number().min(0).max(1),
-      })
-      .parse(request.body);
-    return upsertMemory(input);
-  });
 
-  app.delete("/api/memories/:id", async (request, reply) => {
-    const params = z.object({ id: z.string() }).parse(request.params);
-    const ok = deleteMemory(params.id);
-    return ok ? { ok: true } : reply.status(404).send({ error: "MEMORY_NOT_FOUND" });
-  });
 
-  app.get("/api/developer/dashboard", async () => ({
-    metrics: [
-      { label: "规划成功率", value: "94%" },
-      { label: "兜底触发率", value: "18%" },
-      { label: "支付交接率", value: "100%" },
-      { label: "用户确认率", value: "87%" },
-    ],
-    logs: baseToolLogs,
-    apiKeys: listApiKeys(),
-    webhooks: listWebhooks(),
-  }));
 
-  app.get("/api/developer/api-keys", async () => ({ items: listApiKeys() }));
 
-  app.post("/api/developer/api-keys", async (request) => {
-    const input = z
-      .object({
-        name: z.string().default("Demo Key"),
-        scopes: z.array(z.string()).default(["plan:read", "tool:read"]),
-      })
-      .parse(request.body ?? {});
-    return createApiKey(input.name, input.scopes);
-  });
 
-  app.post("/api/developer/api-keys/:id/revoke", async (request, reply) => {
-    const params = z.object({ id: z.string() }).parse(request.params);
-    const next = revokeApiKey(params.id);
-    if (!next) return reply.status(404).send({ error: "API_KEY_NOT_FOUND" });
-    return next;
-  });
 
-  app.get("/api/developer/webhooks", async () => ({ items: listWebhooks() }));
 
-  app.post("/api/developer/webhooks", async (request) => {
-    const input = z
-      .object({
-        url: z.string().url(),
-        event: z.enum(["plan.created", "reservation.updated", "execution.failed", "share.voted"]),
-        enabled: z.boolean().default(true),
-      })
-      .parse(request.body);
-    return upsertWebhook(input);
-  });
 
-  app.post("/api/developer/webhooks/:id/replay", async (request, reply) => {
-    const params = z.object({ id: z.string() }).parse(request.params);
-    const next = replayWebhook(params.id);
-    if (!next) return reply.status(404).send({ error: "WEBHOOK_NOT_FOUND" });
-    return next;
-  });
 
-  app.get("/api/privacy/export", async () => exportPrivacyBundle());
 
-  app.delete("/api/privacy/memories", async () => clearLongTermMemory());
 
   app.post("/api/ics", async (request, reply) => {
     const body = request.body as { title?: string; date?: string };

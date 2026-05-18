@@ -1,152 +1,124 @@
-/**
- * Profile è·¯ç± â?ä¸ªäººä¸­å¿å¨éæ¥å£
- *
- * åå«: Profile / Persona / Companions / Insights / History / Rating
- *        Notifications / Permissions / Sessions / Privacy / Developer
- */
-
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { randomBytes, createHash } from "node:crypto";
-import { z } from "zod";
+import type { FastifyInstance } from "fastify";
 import type { PrismaClient } from "../../generated/prisma/client.js";
-import { sendOk, sendCreated, sendNoContent } from "../common/response.js";
-import { NotFoundError, ConflictError, BadRequestError, UnauthorizedError } from "../common/errors.js";
+import { z } from "zod";
+import {
+  sendOk,
+  sendCreated,
+  sendNoContent,
+} from "../common/response.js";
+import { NotFoundError, UnauthorizedError } from "../common/errors.js";
 
-// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-// Helpers
-// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Helpers ────────────────────────────────────────────────────────
 
-function uid(req: FastifyRequest): string {
-  const id = req.userId;
-  if (!id) throw new UnauthorizedError("æªç»å½?);
+function uid(request: { userId?: string }): string {
+  const id = request.userId;
+  if (!id) throw new UnauthorizedError("未登录");
   return id;
 }
 
-/** Safely parse a Prisma JSON field to an array */
-function parseJsonArray(val: unknown): unknown[] {
-  if (Array.isArray(val)) return val;
+function parseJsonObject(val: unknown): Record<string, unknown> {
   if (typeof val === "string") {
-    try { return JSON.parse(val); } catch { return []; }
+    try { return JSON.parse(val) as Record<string, unknown>; } catch { return {}; }
+  }
+  return (val && typeof val === "object") ? val as Record<string, unknown> : {};
+}
+
+function parseJsonArray(val: unknown): string[] {
+  if (Array.isArray(val)) return val as string[];
+  if (typeof val === "string") {
+    try { return JSON.parse(val) as string[]; } catch { return []; }
   }
   return [];
 }
 
-/** Safely parse a Prisma JSON field to an object */
-function parseJsonObject(val: unknown): Record<string, unknown> {
-  if (val && typeof val === "object" && !Array.isArray(val)) return val as Record<string, unknown>;
-  if (typeof val === "string") {
-    try { return JSON.parse(val); } catch { return {}; }
-  }
-  return {};
-}
+// ─── Profile Formatting ─────────────────────────────────────────────
 
-// ââ Persona completeness calculation ââ
-
-const PERSONA_FIELDS: Array<{ key: string; default: unknown }> = [
-  { key: "displayName", default: "" },
-  { key: "city", default: "æ­å·" },
-  { key: "startPoint", default: "æµå¤§ç´«éæ¸? },
-  { key: "defaultTimeWindow", default: "ä¸å14:00-18:00" },
-  { key: "transportMode", default: "æ­¥è¡ä¼å" },
-  { key: "walkingTolerance", default: "éä¸­" },
-  { key: "queueTolerance", default: "éä¸­" },
-  { key: "pace", default: "éä¸­" },
-  { key: "indoorPreference", default: "å¹³è¡¡" },
-  { key: "budgetMin", default: 0 },
-  { key: "budgetMax", default: 500 },
-  { key: "dietPreference", default: [] },
-  { key: "avoidFoods", default: [] },
-  { key: "healthGoal", default: "" },
-  { key: "dinnerTimePreference", default: "18:00-19:00" },
-  { key: "activityTags", default: [] },
-  { key: "avoidActivityTags", default: [] },
-  { key: "riskPreference", default: "ä¸­æ? },
-  { key: "secondaryStartPoints", default: [] },
-  { key: "favoriteAreas", default: [] },
-  { key: "distanceLimitKm", default: 10 },
-];
-
-function calcPersonaCompleteness(profile: Record<string, unknown>): number {
-  let filled = 0;
-  for (const field of PERSONA_FIELDS) {
-    const val = profile[field.key];
-    const def = field.default;
-    if (Array.isArray(def)) {
-      const arr = parseJsonArray(val);
-      if (arr.length > 0) filled++;
-    } else if (typeof def === "number") {
-      if (val != null && val !== def) filled++;
-    } else {
-      if (val != null && val !== "" && val !== def) filled++;
-    }
-  }
-  return Math.round((filled / PERSONA_FIELDS.length) * 100);
-}
-
-/** Format a Prisma UserProfile row into a clean API response */
-function formatProfile(profile: Record<string, any>, user?: Record<string, any>) {
+function formatProfile(profile: Record<string, unknown>, user?: { displayName?: string | null }) {
   return {
-    id: profile.id,
-    userId: profile.userId,
-    displayName: user?.displayName ?? "",
-    city: profile.city,
-    startPoint: profile.startPoint,
+    displayName: user?.displayName ?? null,
+    city: (profile.city as string) ?? "杭州",
+    startPoint: (profile.startPoint as string) ?? "浙大紫金港",
     secondaryStartPoints: parseJsonArray(profile.secondaryStartPoints),
     favoriteAreas: parseJsonArray(profile.favoriteAreas),
-    defaultTimeWindow: profile.defaultTimeWindow,
-    transportMode: profile.transportMode,
-    distanceLimitKm: profile.distanceLimitKm,
-    walkingTolerance: profile.walkingTolerance,
-    queueTolerance: profile.queueTolerance,
-    pace: profile.pace,
-    indoorPreference: profile.indoorPreference,
-    budgetMin: profile.budgetMin,
-    budgetMax: profile.budgetMax,
+    defaultTimeWindow: (profile.defaultTimeWindow as string) ?? "下午14:00-18:00",
+    transportMode: (profile.transportMode as string) ?? "any",
+    distanceLimitKm: (profile.distanceLimitKm as number) ?? 10,
+    walkingTolerance: (profile.walkingTolerance as string) ?? "moderate",
+    queueTolerance: (profile.queueTolerance as string) ?? "normal",
+    pace: (profile.pace as string) ?? "balanced",
+    indoorPreference: (profile.indoorPreference as string) ?? "mixed",
+    budgetMin: (profile.budgetMin as number) ?? 0,
+    budgetMax: (profile.budgetMax as number) ?? 500,
     dietPreference: parseJsonArray(profile.dietPreference),
     avoidFoods: parseJsonArray(profile.avoidFoods),
-    healthGoal: profile.healthGoal,
-    dinnerTimePreference: profile.dinnerTimePreference,
+    healthGoal: (profile.healthGoal as string) ?? "none",
+    dinnerTimePreference: (profile.dinnerTimePreference as string) ?? "18:00-20:00",
     activityTags: parseJsonArray(profile.activityTags),
     avoidActivityTags: parseJsonArray(profile.avoidActivityTags),
-    riskPreference: profile.riskPreference,
-    personaCompleteness: profile.personaCompleteness,
-    planCount: profile.planCount,
+    riskPreference: (profile.riskPreference as string) ?? "中性",
+    personaCompleteness: (profile.personaCompleteness as number) ?? 0,
   };
 }
 
-/** Seed default notifications for a user if none exist */
-async function seedNotifications(db: PrismaClient, userId: string): Promise<void> {
-  const count = await db.notification.count({ where: { userId } });
-  if (count > 0) return;
+// ─── Persona Completeness Calculation ───────────────────────────────
+
+function calcPersonaCompleteness(profile: Record<string, unknown>): number {
+  let score = 0;
+  const checks: [string, (v: unknown) => boolean][] = [
+    ["city", (v) => typeof v === "string" && v.length > 0],
+    ["startPoint", (v) => typeof v === "string" && v.length > 0],
+    ["defaultTimeWindow", (v) => typeof v === "string" && v.length > 0],
+    ["transportMode", (v) => typeof v === "string" && v !== "any"],
+    ["walkingTolerance", (v) => typeof v === "string" && v.length > 0],
+    ["queueTolerance", (v) => typeof v === "string" && v.length > 0],
+    ["pace", (v) => typeof v === "string" && v.length > 0],
+    ["budgetMax", (v) => typeof v === "number" && v > 0],
+    ["dietPreference", (v) => Array.isArray(v) && v.length > 0],
+    ["activityTags", (v) => Array.isArray(v) && v.length > 0],
+    ["riskPreference", (v) => typeof v === "string" && v.length > 0],
+    ["favoriteAreas", (v) => Array.isArray(v) && v.length > 0],
+  ];
+  for (const [key, check] of checks) {
+    if (check(profile[key])) score += Math.floor(100 / checks.length);
+  }
+  return Math.min(score, 100);
+}
+
+// ─── Seed Notifications ─────────────────────────────────────────────
+
+async function seedNotifications(db: PrismaClient, userId: string) {
+  const existing = await db.notification.count({ where: { userId } });
+  if (existing > 0) return;
 
   await db.notification.createMany({
     data: [
       {
         userId,
         type: "welcome",
-        title: "æ¬¢è¿ä½¿ç¨å¨æ«æè°±",
-        message: "å®åä½ çä¸ªäººç»åï¼è·å¾æ´ç²¾åçæ¨èï¼",
+        title: "欢迎使用周末有谱",
+        message: "描述你的想法，AI 会为你生成定制方案。",
         read: false,
       },
       {
         userId,
         type: "tip",
-        title: "è¯è¯ AI è§å",
-        message: "æè¿°ä½ çå¨æ«æ³æ³ï¼AI ä¼ä¸ºä½ çæå®å¶æ¹æ¡ã?,
+        title: "试试 AI 规划",
+        message: "完善你的个人画像，获得更精准的推荐。",
         read: false,
       },
       {
         userId,
         type: "system",
-        title: "éç§è®¾ç½®æé",
-        message: "ä½ å¯ä»¥å¨ä¸ªäººä¸­å¿ç®¡çæ°æ®æéåéç§éé¡¹ã?,
+        title: "隐私设置提醒",
+        message: "你可以在个人中心管理数据权限和隐私选项。",
         read: false,
       },
     ],
   });
 }
 
-/** Seed default notification preferences if none exist */
+// ─── Notification Preferences ───────────────────────────────────────
+
 async function ensureNotificationPrefs(db: PrismaClient, userId: string) {
   return db.notificationPreference.upsert({
     where: { userId },
@@ -155,9 +127,9 @@ async function ensureNotificationPrefs(db: PrismaClient, userId: string) {
   });
 }
 
-// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ────────────────────────────────────────────────────────────────────
 // Route Plugin
-// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ────────────────────────────────────────────────────────────────────
 
 export async function registerProfileRoutes(app: FastifyInstance) {
   const db: PrismaClient = app.db;
@@ -167,9 +139,9 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     await (request as any).jwtVerify();
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 1. GET /api/profile/me â?Get full profile bundle
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 1. GET /api/profile/me – Get full profile bundle
+  // ──────────────────────────────────────────────────────────────────
   app.get("/api/profile/me", async (request, reply) => {
     const userId = uid(request);
 
@@ -182,7 +154,7 @@ export async function registerProfileRoutes(app: FastifyInstance) {
       db.userPermission.findUnique({ where: { userId } }),
     ]);
 
-    if (!user) throw new NotFoundError("ç¨æ·ä¸å­å?, "USER_NOT_FOUND");
+    if (!user) throw new NotFoundError("用户不存在", "USER_NOT_FOUND");
 
     // Seed notifications on first access
     await seedNotifications(db, userId);
@@ -190,7 +162,7 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     const [planCount, memoryCount, favoriteCount, unreadNotifications] = await Promise.all([
       db.plan.count({ where: { userId } }),
       db.memory.count({ where: { userId, deletedAt: null } }),
-      // Favorite count â?plan doesn't have favorite field in real schema, count non-draft plans
+      // Favorite count – plan doesn't have favorite field in real schema, count non-draft plans
       db.plan.count({ where: { userId, status: { not: "draft" } } }),
       db.notification.count({ where: { userId, read: false } }),
     ]);
@@ -219,9 +191,9 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     });
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 2. PATCH /api/profile/me â?Update profile display info
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 2. PATCH /api/profile/me – Update profile display info
+  // ──────────────────────────────────────────────────────────────────
   app.patch("/api/profile/me", async (request, reply) => {
     const userId = uid(request);
     const body = z.object({
@@ -240,8 +212,8 @@ export async function registerProfileRoutes(app: FastifyInstance) {
       where: { userId },
       create: {
         userId,
-        city: body.city ?? "æ­å·",
-        startPoint: body.startPoint ?? "æµå¤§ç´«éæ¸?,
+        city: body.city ?? "杭州",
+        startPoint: body.startPoint ?? "浙大紫金港",
       },
       update: {
         ...(body.city !== undefined && { city: body.city }),
@@ -257,20 +229,20 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     sendOk(reply, formatProfile({ ...profile, personaCompleteness: completeness }, user ?? undefined));
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 3. GET /api/profile/me/persona â?Get persona data
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 3. GET /api/profile/me/persona – Get persona data
+  // ──────────────────────────────────────────────────────────────────
   app.get("/api/profile/me/persona", async (request, reply) => {
     const userId = uid(request);
     const profile = await db.userProfile.findUnique({ where: { userId } });
-    if (!profile) throw new NotFoundError("ç¨æ·ç»åä¸å­å?);
+    if (!profile) throw new NotFoundError("用户画像不存在", "PROFILE_NOT_FOUND");
 
     sendOk(reply, formatProfile(profile));
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 4. PATCH /api/profile/me/persona â?Update persona preferences
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 4. PATCH /api/profile/me/persona – Update persona preferences
+  // ──────────────────────────────────────────────────────────────────
   app.patch("/api/profile/me/persona", async (request, reply) => {
     const userId = uid(request);
     const body = z.object({
@@ -319,9 +291,9 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     sendOk(reply, formatProfile({ ...profile, personaCompleteness: completeness }));
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 5. GET /api/profile/me/companions â?List companions
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 5. GET /api/profile/me/companions – List companions
+  // ──────────────────────────────────────────────────────────────────
   app.get("/api/profile/me/companions", async (request, reply) => {
     const userId = uid(request);
     const companions = await db.companion.findMany({
@@ -337,9 +309,9 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     })));
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 6. POST /api/profile/me/companions â?Create companion
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 6. POST /api/profile/me/companions – Create companion
+  // ──────────────────────────────────────────────────────────────────
   app.post("/api/profile/me/companions", async (request, reply) => {
     const userId = uid(request);
     const body = z.object({
@@ -378,9 +350,9 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     });
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 7. PATCH /api/profile/me/companions/:id â?Update companion
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 7. PATCH /api/profile/me/companions/:id – Update companion
+  // ──────────────────────────────────────────────────────────────────
   app.patch("/api/profile/me/companions/:id", async (request, reply) => {
     const userId = uid(request);
     const { id } = z.object({ id: z.string() }).parse(request.params);
@@ -399,7 +371,7 @@ export async function registerProfileRoutes(app: FastifyInstance) {
 
     // Verify ownership
     const existing = await db.companion.findFirst({ where: { id, userId } });
-    if (!existing) throw new NotFoundError("åè¡äººä¸å­å¨", "COMPANION_NOT_FOUND");
+    if (!existing) throw new NotFoundError("同伴不存在", "COMPANION_NOT_FOUND");
 
     const data: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(body)) {
@@ -419,23 +391,23 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     });
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 8. DELETE /api/profile/me/companions/:id â?Delete companion
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 8. DELETE /api/profile/me/companions/:id – Delete companion
+  // ──────────────────────────────────────────────────────────────────
   app.delete("/api/profile/me/companions/:id", async (request, reply) => {
     const userId = uid(request);
     const { id } = z.object({ id: z.string() }).parse(request.params);
 
     const existing = await db.companion.findFirst({ where: { id, userId } });
-    if (!existing) throw new NotFoundError("åè¡äººä¸å­å¨", "COMPANION_NOT_FOUND");
+    if (!existing) throw new NotFoundError("同伴不存在", "COMPANION_NOT_FOUND");
 
     await db.companion.delete({ where: { id } });
     sendNoContent(reply);
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 9. GET /api/profile/me/insights â?Get AI insights (mock)
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 9. GET /api/profile/me/insights – Get AI insights (mock)
+  // ──────────────────────────────────────────────────────────────────
   app.get("/api/profile/me/insights", async (request, reply) => {
     const userId = uid(request);
 
@@ -457,43 +429,43 @@ export async function registerProfileRoutes(app: FastifyInstance) {
       {
         id: "insight_activity",
         type: "recommendation",
-        title: "æ´»å¨åå¥½æ´å¯",
+        title: "活动偏好洞察",
         description: profile
-          ? `ä½ åå¥?{parseJsonArray(profile.activityTags).join("ã?) || "å°æªè®¾å®"}ç±»åçæ´»å¨ãå®ååå¥½å¯è·å¾æ´ç²¾åæ¨èã`
-          : "å®åä½ çæ´»å¨åå¥½ï¼è·å¾æ´ç²¾åçå¨æ«æ¨èã?,
+          ? `你偏好 ${parseJsonArray(profile.activityTags).join("、") || "尚未设定"} 类型的活动。完善偏好可获得更精准推荐。`
+          : "完善你的活动偏好，获得更精准的周末推荐。",
         icon: "sparkles",
       },
       {
         id: "insight_food",
         type: "recommendation",
-        title: "é¥®é£åå¥½åæ",
+        title: "饮食偏好分析",
         description: profile
-          ? `ä½ çé¥®é£åå¥½ä¸?{parseJsonArray(profile.dietPreference).join("ã?) || "æªè®¾å®?}ï¼å¿å?{parseJsonArray(profile.avoidFoods).join("ã?) || "æ?}ã`
-          : "åè¯æä»¬ä½ çé¥®é£åå¥½ï¼å¸®ä½ é¿å¼ä¸åéçéæ©ã?,
+          ? `你的饮食偏好为 ${parseJsonArray(profile.dietPreference).join("、") || "未设定"}，忌避 ${parseJsonArray(profile.avoidFoods).join("、") || "无"}。`
+          : "告诉我们你的饮食偏好，帮你避开不合适的选择。",
         icon: "utensils",
       },
       {
         id: "insight_persona",
         type: "progress",
-        title: "ç»åå®æåº?,
-        description: `ä½ çä¸ªäººç»åå·²å®æ?${completeness}%ï¼?{completeness >= 80 ? "éå¸¸å®å" : "è¿ææåç©ºé´"}ã`,
+        title: "画像完成度",
+        description: `你的个人画像已完成 ${completeness}%，${completeness >= 80 ? "非常完善" : "还有提升空间"}。`,
         icon: "user",
         progress: completeness,
       },
       {
         id: "insight_memory",
         type: "memory",
-        title: "è®°å¿æ´å¯",
+        title: "记忆洞察",
         description: memories.length > 0
-          ? `ä½ æ ${memories.length} æ¡é¿æè®°å¿ï¼æå¸¸å³æ³¨ã?{topCategory}ãé¢åã`
-          : "å¼å§è§åå¨æ«ï¼ç³»ç»ä¼èªå¨è®°å½ä½ çåå¥½ã?,
+          ? `你有 ${memories.length} 条长期记忆，最常关注「${topCategory}」领域。`
+          : "开始规划周末，系统会自动记录你的偏好。",
         icon: "brain",
       },
       {
         id: "insight_plans",
         type: "stats",
-        title: "è§åç»è®¡",
-        description: `ä½ å·²çæ ${planCount} ä¸ªè§åæ¹æ¡ã?{planCount > 5 ? "ä½ æ¯èµæ·±è§åå¸ï¼" : "ç»§ç»­æ¢ç´¢æ´å¤å¯è½æ§å§ã?}`,
+        title: "规划统计",
+        description: `你已生成 ${planCount} 个规划方案。${planCount > 5 ? "你是资深规划师！" : "继续探索更多可能性吧。"}`,
         icon: "bar-chart",
       },
     ];
@@ -501,9 +473,9 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     sendOk(reply, { insights });
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 10. GET /api/profile/me/history â?Get plan history
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 10. GET /api/profile/me/history – Get plan history
+  // ──────────────────────────────────────────────────────────────────
   app.get("/api/profile/me/history", async (request, reply) => {
     const userId = uid(request);
     const query = z.object({
@@ -533,9 +505,9 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     sendOk(reply, { items, total });
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 11. POST /api/plans/:id/rating â?Rate a plan
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 11. POST /api/plans/:id/rating – Rate a plan
+  // ──────────────────────────────────────────────────────────────────
   app.post("/api/plans/:id/rating", async (request, reply) => {
     const userId = uid(request);
     const { id } = z.object({ id: z.string() }).parse(request.params);
@@ -545,7 +517,7 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     }).parse(request.body);
 
     const plan = await db.plan.findFirst({ where: { id, userId } });
-    if (!plan) throw new NotFoundError("è§åä¸å­å?, "PLAN_NOT_FOUND");
+    if (!plan) throw new NotFoundError("规划不存在", "PLAN_NOT_FOUND");
 
     // Store rating in intent metadata (Plan model uses Json intent field)
     const intent = parseJsonObject(plan.intent);
@@ -560,9 +532,9 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     sendOk(reply, { id: updated.id, rating: body.rating, favorite: body.favorite ?? false });
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 12. GET /api/notifications â?List notifications
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 12. GET /api/notifications – List notifications
+  // ──────────────────────────────────────────────────────────────────
   app.get("/api/notifications", async (request, reply) => {
     const userId = uid(request);
 
@@ -590,15 +562,15 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     sendOk(reply, { items, total, unread });
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 13. PATCH /api/notifications/:id/read â?Mark notification read
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 13. PATCH /api/notifications/:id/read – Mark notification read
+  // ──────────────────────────────────────────────────────────────────
   app.patch("/api/notifications/:id/read", async (request, reply) => {
     const userId = uid(request);
     const { id } = z.object({ id: z.string() }).parse(request.params);
 
     const notification = await db.notification.findFirst({ where: { id, userId } });
-    if (!notification) throw new NotFoundError("éç¥ä¸å­å?, "NOTIFICATION_NOT_FOUND");
+    if (!notification) throw new NotFoundError("通知不存在", "NOTIFICATION_NOT_FOUND");
 
     const updated = await db.notification.update({
       where: { id },
@@ -608,32 +580,32 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     sendOk(reply, updated);
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 14. DELETE /api/notifications/:id â?Delete notification
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 14. DELETE /api/notifications/:id – Delete notification
+  // ──────────────────────────────────────────────────────────────────
   app.delete("/api/notifications/:id", async (request, reply) => {
     const userId = uid(request);
     const { id } = z.object({ id: z.string() }).parse(request.params);
 
     const notification = await db.notification.findFirst({ where: { id, userId } });
-    if (!notification) throw new NotFoundError("éç¥ä¸å­å?, "NOTIFICATION_NOT_FOUND");
+    if (!notification) throw new NotFoundError("通知不存在", "NOTIFICATION_NOT_FOUND");
 
     await db.notification.delete({ where: { id } });
     sendNoContent(reply);
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 15. GET /api/notifications/preferences â?Get notification prefs
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 15. GET /api/notifications/preferences – Get notification prefs
+  // ──────────────────────────────────────────────────────────────────
   app.get("/api/notifications/preferences", async (request, reply) => {
     const userId = uid(request);
     const prefs = await ensureNotificationPrefs(db, userId);
     sendOk(reply, prefs);
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 16. PATCH /api/notifications/preferences â?Update notification prefs
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 16. PATCH /api/notifications/preferences – Update notification prefs
+  // ──────────────────────────────────────────────────────────────────
   app.patch("/api/notifications/preferences", async (request, reply) => {
     const userId = uid(request);
     const body = z.object({
@@ -656,9 +628,9 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     sendOk(reply, prefs);
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 17. GET /api/profile/me/permissions â?Get permission settings
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 17. GET /api/profile/me/permissions – Get permission settings
+  // ──────────────────────────────────────────────────────────────────
   app.get("/api/profile/me/permissions", async (request, reply) => {
     const userId = uid(request);
     const perms = await db.userPermission.upsert({
@@ -676,9 +648,9 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     });
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 18. PATCH /api/profile/me/permissions â?Update permissions
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 18. PATCH /api/profile/me/permissions – Update permissions
+  // ──────────────────────────────────────────────────────────────────
   app.patch("/api/profile/me/permissions", async (request, reply) => {
     const userId = uid(request);
     const body = z.object({
@@ -704,9 +676,9 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     });
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 19. GET /api/auth/sessions â?List user sessions
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 19. GET /api/auth/sessions – List user sessions
+  // ──────────────────────────────────────────────────────────────────
   app.get("/api/auth/sessions", async (request, reply) => {
     const userId = uid(request);
     const sessions = await db.userSession.findMany({
@@ -724,15 +696,15 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     sendOk(reply, { sessions });
   });
 
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  // 20. DELETE /api/auth/sessions/:id â?Revoke a session
-  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ──────────────────────────────────────────────────────────────────
+  // 20. DELETE /api/auth/sessions/:id – Revoke a session
+  // ──────────────────────────────────────────────────────────────────
   app.delete("/api/auth/sessions/:id", async (request, reply) => {
     const userId = uid(request);
     const { id } = z.object({ id: z.string() }).parse(request.params);
 
     const session = await db.userSession.findFirst({ where: { id, userId, revokedAt: null } });
-    if (!session) throw new NotFoundError("?????");
+    if (!session) throw new NotFoundError("会话不存在", "SESSION_NOT_FOUND");
 
     await db.userSession.update({
       where: { id },
@@ -740,6 +712,38 @@ export async function registerProfileRoutes(app: FastifyInstance) {
     });
 
     sendNoContent(reply);
+  });
+
+  // ──────────────────────────────────────────────────────────────────
+  // 21. POST /api/notifications/read-all – Mark all notifications read
+  // ──────────────────────────────────────────────────────────────────
+  app.post("/api/notifications/read-all", async (request, reply) => {
+    const userId = uid(request);
+
+    await db.notification.updateMany({
+      where: { userId, read: false },
+      data: { read: true },
+    });
+
+    sendOk(reply, { success: true });
+  });
+
+  // ──────────────────────────────────────────────────────────────────
+  // 22. PATCH /api/account – Update account info
+  // ──────────────────────────────────────────────────────────────────
+  app.patch("/api/account", async (request, reply) => {
+    const userId = uid(request);
+    const body = z.object({
+      displayName: z.string().min(1).max(50).optional(),
+    }).parse(request.body);
+
+    const user = await db.user.update({
+      where: { id: userId },
+      data: { displayName: body.displayName },
+      select: { id: true, email: true, displayName: true, mode: true, role: true, createdAt: true },
+    });
+
+    sendOk(reply, user);
   });
 }
 
