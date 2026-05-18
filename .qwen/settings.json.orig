@@ -8,7 +8,13 @@
       "Bash(findstr *)",
       "Bash(git stash)",
       "Bash(timeout *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(del *)",
+      "Bash(pnpm add *)",
+      "Bash(npm ls *)",
+      "Bash(node *)",
+      "Bash(type *)",
+      "Bash(powershell *)"
     ]
   },
   "$version": 4

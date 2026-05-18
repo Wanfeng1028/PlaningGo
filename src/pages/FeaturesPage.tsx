@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, Circle, Clock3, Search } from "lucide-react";
 import { Button } from "../components/Button";
+import { RevealGroup } from "../components/RevealGroup";
 import { RouteMap } from "../components/RouteMap";
 import { productScreens, type ProductScreen, type ProductScreenKind } from "../data/productScreens";
 import { requestAgentPlan, type AgentPlanResponse } from "../lib/api";
@@ -54,7 +55,7 @@ function ScreenPreview({
 
   if (screen.kind === "plans") {
     return (
-      <div className={styles.planSwitch}>
+      <RevealGroup className={styles.planSwitch} delayStep={60}>
         {result ? (
           <div className={styles.agentBanner}>
             <strong>推荐摘要</strong>
@@ -69,7 +70,7 @@ function ScreenPreview({
             <em>{plan.score} 匹配度</em>
           </article>
         ))}
-      </div>
+      </RevealGroup>
     );
   }
 
@@ -89,7 +90,7 @@ function ScreenPreview({
 
   if (screen.kind === "developer") {
     return (
-      <div className={styles.consolePreview}>
+      <RevealGroup className={styles.consolePreview} delayStep={50} initialDelay={60}>
         {["map.poi.fetch", "weather.risk.check", "restaurant.reserve.query", "calendar.write"].map((item, index) => (
           <div className={styles.logRow} key={item}>
             <span>0{index + 1}</span>
@@ -97,19 +98,19 @@ function ScreenPreview({
             <em>{index === 2 ? "retry-ready" : "success"}</em>
           </div>
         ))}
-      </div>
+      </RevealGroup>
     );
   }
 
   return (
-    <div className={styles.statusPreview}>
+    <RevealGroup className={styles.statusPreview} delayStep={55} initialDelay={60}>
       {screen.details.map((detail, index) => (
         <div className={styles.statusRow} key={detail}>
           {index < 2 ? <CheckCircle2 size={18} /> : index === 2 ? <Clock3 size={18} /> : <Circle size={18} />}
           <span>{detail}</span>
         </div>
       ))}
-    </div>
+    </RevealGroup>
   );
 }
 
@@ -215,14 +216,14 @@ export function FeaturesPage({ onOpenModal }: FeaturesPageProps) {
               <span className={styles.sourcePill}>{activeScreen.source}</span>
             </div>
 
-            <div className={styles.metricGrid}>
+            <RevealGroup className={styles.metricGrid} delayStep={55} initialDelay={60}>
               {activeScreen.metrics.map((metric) => (
                 <span className={styles.metric} key={metric.label}>
                   <strong>{metric.value}</strong>
                   <em>{metric.label}</em>
                 </span>
               ))}
-            </div>
+            </RevealGroup>
 
             <div className={styles.implementationGrid}>
               <div className={styles.previewPanel}>

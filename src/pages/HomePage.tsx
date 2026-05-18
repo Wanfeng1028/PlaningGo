@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { RevealGroup } from "../components/RevealGroup";
 import type { ModalKey, NavKey } from "../types";
 import styles from "./Pages.module.scss";
 
@@ -299,7 +300,7 @@ export function HomePage({ onNavigate, onOpenModal }: HomePageProps) {
           <h2>小美可以帮你做什么</h2>
           <p>把灵感变成计划，把计划变成美好的回忆。</p>
         </div>
-        <div className={styles.whyChooseGrid}>
+        <RevealGroup className={styles.whyChooseGrid}>
           {whyChooseCards.map((card) => (
             <article className={styles.whyChooseCard} key={card.title}>
               <span className={`${styles.whyChooseIcon} ${styles[`whyChooseIcon${card.tone}`]}`}>
@@ -311,7 +312,7 @@ export function HomePage({ onNavigate, onOpenModal }: HomePageProps) {
               </div>
             </article>
           ))}
-        </div>
+        </RevealGroup>
       </section>
 
       <section className={styles.demoScreen}>

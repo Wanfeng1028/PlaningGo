@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
 import type { ModalKey, SectionBlock } from "../types";
+import { RevealGroup } from "../components/RevealGroup";
 import { SectionHeader } from "../components/SectionHeader";
 import styles from "./Pages.module.scss";
 
@@ -28,9 +28,9 @@ export function FlowPage({ blocks, eyebrow, title, intro, onOpenModal }: FlowPag
         return (
           <section className={styles.section} key={block.id}>
             <SectionHeader eyebrow={block.eyebrow} title={block.title} intro={block.intro} />
-            <div className={styles.grid}>
-              {block.items.map((item, index) => (
-                <motion.article
+            <RevealGroup className={styles.grid}>
+              {block.items.map((item) => (
+                <article
                   className={`${styles.card} ${item.modal ? styles.clickable : ""}`}
                   role={item.modal ? "button" : undefined}
                   tabIndex={item.modal ? 0 : undefined}
@@ -40,10 +40,6 @@ export function FlowPage({ blocks, eyebrow, title, intro, onOpenModal }: FlowPag
                       onOpenModal(item.modal);
                     }
                   }}
-                  initial={{ opacity: 0, y: 18 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-80px" }}
-                  transition={{ delay: index * 0.04 }}
                   key={`${block.id}-${item.title}`}
                 >
                   <span className={styles.mode}>{modeLabel[item.mode]}</span>
@@ -53,9 +49,9 @@ export function FlowPage({ blocks, eyebrow, title, intro, onOpenModal }: FlowPag
                   <h3>{item.title}</h3>
                   <p>{item.desc}</p>
                   <span className={styles.source}>{item.source}</span>
-                </motion.article>
+                </article>
               ))}
-            </div>
+            </RevealGroup>
           </section>
         );
       })}

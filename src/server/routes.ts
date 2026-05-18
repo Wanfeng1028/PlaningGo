@@ -6,27 +6,14 @@ import { parseDemand, planningRequestSchema, runPlanningAgent, simulateWhatIf } 
 import { runPlanningPipeline } from "./modules/agent/orchestrator";
 import {
   advanceExecution,
-  clearLongTermMemory,
-  createApiKey,
   createShareRoom,
-  deleteMemory,
-  exportPrivacyBundle,
   getSelectedPlanId,
-  listApiKeys,
   listExecutionSteps,
-  listMemories,
-  listPermissions,
   listReservations,
   listShareRooms,
-  listWebhooks,
-  replayWebhook,
-  revokeApiKey,
   selectPlan,
-  setPermission,
   updateExecutionStep,
   updateReservationStatus,
-  upsertWebhook,
-  upsertMemory,
   upsertReservation,
   vote,
   saveActions,
@@ -36,24 +23,27 @@ import {
   cancelAction,
 } from "./services/store";
 
-const authSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  name: z.string().optional(),
-});
-
-const guestSchema = z.object({
-  city: z.string().default("杭州"),
-  startPoint: z.string().default("浙大紫金港"),
-  companions: z.enum(["family", "friends", "couple", "solo"]).default("family"),
-});
-
 const permissionSchema = z.object({
   key: z.string(),
   allowed: z.boolean(),
 });
 
 export async function registerRoutes(app: FastifyInstance) {
+  // ── 注册模块化路由 ──
+  await import("./routes/auth.js").then((m) => m.registerAuthRoutes(app));
+  await import("./routes/profile.js").then((m) => m.registerProfileRoutes(app));
+  await import("./routes/plans.js").then((m) => m.registerPlanRoutes(app));
+  await import("./routes/reservations.js").then((m) => m.registerReservationRoutes(app));
+  await import("./routes/execution.js").then((m) => m.registerExecutionRoutes(app));
+  await import("./routes/actions.js").then((m) => m.registerActionRoutes(app));
+  await import("./routes/share.js").then((m) => m.registerShareRoutes(app));
+  await import("./routes/memory.js").then((m) => m.registerMemoryRoutes(app));
+  await import("./routes/developer.js").then((m) => m.registerDeveloperRoutes(app));
+  await import("./routes/privacy.js").then((m) => m.registerPrivacyRoutes(app));
+  await import("./routes/calendar.js").then((m) => m.registerCalendarRoutes(app));
+  await import("./routes/agent.js").then((m) => m.registerAgentRoutes(app));
+  await import("./routes/mock.js").then((m) => m.registerMockRoutes(app));
+
   app.get("/api/health", async () => ({
     ok: true,
     service: "planning-go-api",
@@ -80,60 +70,6 @@ export async function registerRoutes(app: FastifyInstance) {
   }));
 
   app.get("/api/profile/demo", async () => demoProfile);
-
-  app.post("/api/auth/login", async (request, reply) => {
-    const input = authSchema.parse(request.body);
-    if (input.email === "xiaoming@example.com" && input.password !== "weekend123") {
-      return reply.status(401).send({ error: "INVALID_PASSWORD", message: "邮箱或密码错误。演示密码为 weekend123。" });
-    }
-    return {
-      token: `demo_token_${Date.now()}`,
-      user: {
-        id: demoProfile.id,
-        name: input.name ?? demoProfile.name,
-        email: input.email,
-      },
-      profile: demoProfile,
-    };
-  });
-
-  app.post("/api/auth/register", async (request, reply) => {
-    const input = authSchema.parse(request.body);
-    if (input.password.length < 6) {
-      return reply.status(400).send({ error: "WEAK_PASSWORD", message: "密码至少需要 6 位。" });
-    }
-    return {
-      token: `demo_token_${Date.now()}`,
-      user: {
-        id: `user_${Date.now()}`,
-        name: input.name ?? "新用户",
-        email: input.email,
-      },
-      onboardingSteps: ["城市", "家庭成员", "预算习惯"],
-    };
-  });
-
-  app.post("/api/auth/guest", async (request) => {
-    const input = guestSchema.parse(request.body ?? {});
-    return {
-      token: `guest_token_${Date.now()}`,
-      user: {
-        id: `guest_${Date.now()}`,
-        name: "游客",
-        mode: "guest",
-      },
-      profile: {
-        ...demoProfile,
-        id: "guest",
-        name: "游客",
-        city: input.city,
-        startPoint: input.startPoint,
-        family: input.companions === "family" ? ["5 岁孩子", "伴侣"] : [],
-        preferences: ["低负担路线", "预算可控", "可随时改计划"],
-      },
-      expiresInMinutes: 120,
-    };
-  });
 
   app.patch("/api/profile/demo", async (request) => ({
     ...demoProfile,

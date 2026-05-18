@@ -32,10 +32,10 @@ export const modalContent: Record<ModalContent["key"], ModalContent> = {
     key: "contact",
     eyebrow: "联系方式",
     title: "联系我们",
-    body: "如果你想继续交流产品方向、设计细节或合作想法，可以直接发邮件给我：wanfengcodex@hotmail.com",
+    body: "如果你想继续交流产品方向、设计细节或合作想法，可以直接发邮件给我：service.ai@outlook.com",
     primary: "收到",
     secondary: "稍后联系",
-    bullets: ["邮箱：wanfengcodex@hotmail.com", "适合反馈建议、合作咨询与问题交流", "也欢迎直接说明你的需求场景，我会尽快回复"],
+    bullets: ["邮箱：service.ai@outlook.com", "适合反馈建议、合作咨询与问题交流", "也欢迎直接说明你的需求场景，我会尽快回复"],
   },
   identity: {
     key: "identity",

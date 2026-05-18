@@ -1,0 +1,47 @@
+// =============================================================================
+// RevealGroup 公共卡片渐入动画
+// 所有页面卡片组统一复用，CSS animation + custom properties 实现 stagger
+// =============================================================================
+
+.revealGroup {
+  width: 100%;
+}
+
+.revealItem {
+  min-width: 0;
+  height: 100%;
+  animation: cardSoftReveal 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(
+    var(--reveal-initial-delay, 80ms) + var(--reveal-index, 0) * var(--reveal-delay-step, 70ms)
+  );
+  will-change: opacity, transform, filter;
+}
+
+.revealItem > * {
+  height: 100%;
+}
+
+@keyframes cardSoftReveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+    filter: blur(8px);
+  }
+
+  60% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .revealItem {
+    animation: none;
+    will-change: auto;
+  }
+}

@@ -1,4 +1,8 @@
+@use "../styles/glass" as glass;
+
 .nav {
+  @include glass.glass-surface;
+
   position: sticky;
   top: 24px;
   z-index: 50;
@@ -12,11 +16,28 @@
   align-items: center;
   gap: 24px;
   padding: 0 var(--layout-content-gutter);
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
-  background: rgb(var(--color-surface-rgb) / 0.96);
-  box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(10px);
+}
+
+.nav::before {
+  @include glass.glass-card-light;
+}
+
+.nav::after {
+  @include glass.glass-card-glow;
+  opacity: 0.38;
+}
+
+.nav:hover {
+  @include glass.glass-surface-hover;
+}
+
+.brand,
+.links,
+.actions,
+.menuButton {
+  position: relative;
+  z-index: 1;
 }
 
 .brand {
@@ -186,6 +207,8 @@
   }
 
   .mobilePanel {
+    @include glass.glass-surface;
+
     position: fixed;
     left: 16px;
     right: 16px;
@@ -194,10 +217,15 @@
     display: grid;
     gap: 10px;
     padding: 18px;
-    border: 1px solid var(--color-border);
     border-radius: 28px;
-    background: var(--color-surface);
-    box-shadow: var(--shadow-lg);
+  }
+
+  .mobilePanel::before {
+    @include glass.glass-card-light;
+  }
+
+  .mobilePanel::after {
+    @include glass.glass-card-glow;
   }
 
   .mobilePanel[hidden] {

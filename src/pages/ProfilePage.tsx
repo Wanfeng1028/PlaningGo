@@ -1,5 +1,6 @@
 import { ShieldCheck, UserRound } from "lucide-react";
 import { Button } from "../components/Button";
+import { RevealGroup } from "../components/RevealGroup";
 import { SectionHeader } from "../components/SectionHeader";
 import { profileBlocks, scoreboard } from "../data/content";
 import type { ModalKey } from "../types";
@@ -26,7 +27,7 @@ export function ProfilePage({ onOpenModal }: ProfilePageProps) {
           title="下次规划会更懂你"
           intro="这里不是静态资料页，而是会持续记录你的出行习惯、预算偏好和常见选择。"
         />
-        <div className={styles.twoGrid}>
+        <RevealGroup className={styles.twoGrid}>
           <article className={styles.card}>
             <span className={styles.cardIcon}>
               <UserRound size={22} />
@@ -59,7 +60,7 @@ export function ProfilePage({ onOpenModal }: ProfilePageProps) {
               })}
             </div>
           </article>
-        </div>
+        </RevealGroup>
       </section>
     </>
   );

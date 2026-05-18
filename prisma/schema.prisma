@@ -1,0 +1,577 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// Users & Auth
+// ============================================================================
+
+model User {
+  id              String     @id @default(uuid()) @db.Uuid
+  email           String     @unique
+  passwordHash    String?    @map("password_hash")
+  displayName     String     @default("周末用户") @map("display_name")
+  role            String     @default("user")
+  mode            String     @default("registered")
+  status          String     @default("active")
+  emailVerifiedAt DateTime?  @map("email_verified_at")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  deletedAt       DateTime?  @map("deleted_at")
+
+  refreshTokens   RefreshToken[]
+  profile         UserProfile?
+  permissions     UserPermission?
+  plans           Plan[]
+  actions         Action[]
+  reservations    Reservation[]
+  executionSteps  ExecutionStep[]
+  shareRooms      ShareRoom[]
+  memories        Memory[]
+  apiKeys         ApiKey[]
+  webhooks        Webhook[]
+  auditLogs       AuditLog[]
+  llmCallLogs     LlmCallLog[]
+  toolCallLogs    ToolCallLog[]
+  companions      Companion[]
+  notifications   Notification[]
+  sessions        UserSession[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  userAgent String?   @map("user_agent")
+  ipAddress String?   @map("ip_address")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+// ============================================================================
+// Profile & Permissions
+// ============================================================================
+
+model UserProfile {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @unique @map("user_id") @db.Uuid
+  city        String   @default("北京")
+  startPoint  String   @default("家附近") @map("start_point")
+  homeLat     Float?   @map("home_lat")
+  homeLng     Float?   @map("home_lng")
+  companions  String   @default("family")
+  budgetMin   Int      @default(200) @map("budget_min")
+  budgetMax   Int      @default(300) @map("budget_max")
+  preferences Json     @default("[]")
+  familyInfo  Json     @default("[]") @map("family_info")
+
+  // ── 扩展画像字段 ──
+  secondaryStartPoints Json       @default("[]") @map("secondary_start_points")
+  favoriteAreas        Json       @default("[]") @map("favorite_areas")
+  defaultTimeWindow    String     @default("周末半天") @map("default_time_window")
+  transportMode        String     @default("混合") @map("transport_mode")
+  distanceLimitKm      Int        @default(5) @map("distance_limit_km")
+  walkingTolerance     String     @default("中") @map("walking_tolerance")
+  queueTolerance       String     @default("中") @map("queue_tolerance")
+  pace                 String     @default("适中") @map("pace")
+  indoorPreference     String     @default("都可以") @map("indoor_preference")
+  dietPreference       Json       @default("[]") @map("diet_preference")
+  avoidFoods           Json       @default("[]") @map("avoid_foods")
+  healthGoal           String     @default("无特殊") @map("health_goal")
+  dinnerTimePreference String     @default("18:00-19:00") @map("dinner_time_preference")
+  activityTags         Json       @default("[]") @map("activity_tags")
+  avoidActivityTags    Json       @default("[]") @map("avoid_activity_tags")
+  riskPreference       String     @default("稳妥") @map("risk_preference")
+  personaCompleteness  Int        @default(0) @map("persona_completeness")
+  planCount            Int        @default(0) @map("plan_count")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model UserPermission {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @unique @map("user_id") @db.Uuid
+  locationEnabled  Boolean  @default(true) @map("location_enabled")
+  memoryEnabled    Boolean  @default(true) @map("memory_enabled")
+  calendarEnabled  Boolean  @default(false) @map("calendar_enabled")
+  shareEnabled     Boolean  @default(true) @map("share_enabled")
+  developerEnabled Boolean  @default(false) @map("developer_enabled")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_permissions")
+}
+
+// ============================================================================
+// Plans
+// ============================================================================
+
+model Plan {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  status           String    @default("draft")
+  title            String
+  summary          String    @default("")
+  intent           Json      @default("{}")
+  contextSnapshot  Json      @default("{}") @map("context_snapshot")
+  selectedOptionId String?   @map("selected_option_id")
+  traceId          String    @default("") @map("trace_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  options PlanOption[]
+
+  @@index([userId])
+  @@map("plans")
+}
+
+model PlanOption {
+  id               String   @id @default(uuid()) @db.Uuid
+  planId           String   @map("plan_id") @db.Uuid
+  title            String
+  targetGroup      String   @default("unknown") @map("target_group")
+  score            Int      @default(0)
+  totalDurationMin Int      @default(0) @map("total_duration_min")
+  costMin          Int      @default(0) @map("cost_min")
+  costMax          Int      @default(0) @map("cost_max")
+  currency         String   @default("CNY")
+  assumptions      Json     @default("[]")
+  risks            Json     @default("[]")
+  backupPlan       Json     @map("backup_plan")
+  validationStatus String   @default("pending") @map("validation_status")
+  validationReport Json     @map("validation_report")
+  summary          String   @default("")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  plan  Plan         @relation(fields: [planId], references: [id], onDelete: Cascade)
+  steps PlanStep[]
+
+  @@index([planId])
+  @@map("plan_options")
+}
+
+model PlanStep {
+  id            String  @id @default(uuid()) @db.Uuid
+  planOptionId  String  @map("plan_option_id") @db.Uuid
+  orderIndex    Int     @map("order_index")
+  startTime     String  @map("start_time")
+  endTime       String  @map("end_time")
+  type          String
+  placeId       String? @map("place_id")
+  placeName     String? @map("place_name")
+  action        String  @default("")
+  durationMin   Int     @default(0) @map("duration_min")
+  transport     String  @default("none")
+  bookingNeeded Boolean @default(false) @map("booking_needed")
+  metadata      Json    @default("{}")
+
+  planOption PlanOption @relation(fields: [planOptionId], references: [id], onDelete: Cascade)
+
+  @@index([planOptionId])
+  @@map("plan_steps")
+}
+
+// ============================================================================
+// POI
+// ============================================================================
+
+model Poi {
+  id         String   @id @default(uuid()) @db.Uuid
+  source     String   @default("mock")
+  sourceId   String   @default("") @map("source_id")
+  name       String
+  category   String
+  address    String   @default("")
+  lat        Float?
+  lng        Float?
+  rating     Float?
+  priceLevel Int?     @map("price_level")
+  tags       Json     @default("[]")
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([source, sourceId])
+  @@map("pois")
+}
+
+// ============================================================================
+// Actions
+// ============================================================================
+
+model Action {
+  id                   String     @id @default(uuid()) @db.Uuid
+  userId               String     @map("user_id") @db.Uuid
+  planId               String?    @map("plan_id") @db.Uuid
+  planOptionId         String?    @map("plan_option_id") @db.Uuid
+  type                 String
+  status               String     @default("proposed")
+  confirmationRequired Boolean    @default(true) @map("confirmation_required")
+  idempotencyKey       String     @unique @map("idempotency_key")
+  payload              Json       @default("{}")
+  quote                Json?
+  result               Json?
+  errorCode            String?    @map("error_code")
+  errorMessage         String?    @map("error_message")
+  expiresAt            DateTime?  @map("expires_at")
+  createdAt            DateTime   @default(now()) @map("created_at")
+  updatedAt            DateTime   @updatedAt @map("updated_at")
+
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events      ActionEvent[]
+  reservation Reservation?
+
+  @@index([userId])
+  @@index([planId])
+  @@map("actions")
+}
+
+model ActionEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  actionId   String   @map("action_id") @db.Uuid
+  eventType  String   @map("event_type")
+  fromStatus String?  @map("from_status")
+  toStatus   String?  @map("to_status")
+  payload    Json     @default("{}")
+  traceId    String   @default("") @map("trace_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  action Action @relation(fields: [actionId], references: [id], onDelete: Cascade)
+
+  @@index([actionId])
+  @@map("action_events")
+}
+
+// ============================================================================
+// Reservations
+// ============================================================================
+
+model Reservation {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  actionId    String?  @unique @map("action_id") @db.Uuid
+  type        String
+  title       String
+  status      String   @default("draft")
+  price       String?
+  detail      String   @default("")
+  provider    String   @default("mock")
+  providerRef String?  @map("provider_ref")
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action Action? @relation(fields: [actionId], references: [id])
+
+  @@index([userId])
+  @@map("reservations")
+}
+
+// ============================================================================
+// Execution
+// ============================================================================
+
+model ExecutionStep {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  planId     String?  @map("plan_id") @db.Uuid
+  key        String
+  title      String
+  status     String   @default("pending")
+  orderIndex Int      @default(0) @map("order_index")
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("execution_steps")
+}
+
+// ============================================================================
+// Share
+// ============================================================================
+
+model ShareRoom {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  planId     String?  @map("plan_id") @db.Uuid
+  title      String
+  status     String   @default("active")
+  inviteCode String   @unique @map("invite_code")
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  votes ShareVote[]
+
+  @@index([userId])
+  @@map("share_rooms")
+}
+
+model ShareVote {
+  id         String   @id @default(uuid()) @db.Uuid
+  roomId     String   @map("room_id") @db.Uuid
+  memberName String   @map("member_name")
+  vote       String
+  comment    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  room ShareRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@map("share_votes")
+}
+
+// ============================================================================
+// Memories
+// ============================================================================
+
+model Memory {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  category  String
+  title     String
+  detail    String
+  weight    Float     @default(0.5)
+  source    String    @default("user")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("memories")
+}
+
+// ============================================================================
+// Developer
+// ============================================================================
+
+model ApiKey {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  name       String
+  keyHash    String    @map("key_hash")
+  prefix     String
+  status     String    @default("active")
+  lastUsedAt DateTime? @map("last_used_at")
+  revokedAt  DateTime? @map("revoked_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  scopes     Json      @default("[]")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("api_keys")
+}
+
+model Webhook {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  url        String
+  event      String
+  secretHash String   @default("") @map("secret_hash")
+  enabled    Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+
+  @@index([userId])
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id             String    @id @default(uuid()) @db.Uuid
+  webhookId      String    @map("webhook_id") @db.Uuid
+  event          String
+  payload        Json      @default("{}")
+  status         String    @default("pending")
+  responseStatus Int?      @map("response_status")
+  responseBody   String?   @map("response_body")
+  errorMessage   String?   @map("error_message")
+  attemptCount   Int       @default(0) @map("attempt_count")
+  nextRetryAt    DateTime? @map("next_retry_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@map("webhook_deliveries")
+}
+
+// ============================================================================
+// Observability
+// ============================================================================
+
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String?  @map("user_id") @db.Uuid
+  actorType    String   @default("user") @map("actor_type")
+  action       String
+  resourceType String   @default("") @map("resource_type")
+  resourceId   String   @default("") @map("resource_id")
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  traceId      String   @default("") @map("trace_id")
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model LlmCallLog {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String?  @map("user_id") @db.Uuid
+  traceId          String   @default("") @map("trace_id")
+  provider         String   @default("openai")
+  model            String
+  mode             String   @default("mock")
+  promptTokens     Int      @default(0) @map("prompt_tokens")
+  completionTokens Int      @default(0) @map("completion_tokens")
+  latencyMs        Int      @default(0) @map("latency_ms")
+  status           String   @default("success")
+  errorCode        String?  @map("error_code")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([traceId])
+  @@map("llm_call_logs")
+}
+
+model ToolCallLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String?  @map("user_id") @db.Uuid
+  traceId   String   @default("") @map("trace_id")
+  toolName  String   @map("tool_name")
+  input     Json     @default("{}")
+  output    Json     @default("{}")
+  latencyMs Int      @default(0) @map("latency_ms")
+  status    String   @default("success")
+  errorCode String?  @map("error_code")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([traceId])
+  @@map("tool_call_logs")
+}
+
+// ============================================================================
+// Companions
+// ============================================================================
+
+model Companion {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  type       String   @default("family")
+  name       String
+  relation   String   @default("")
+  ageGroup   String   @default("adult") @map("age_group")
+  preferences Json    @default("[]")
+  avoid      Json     @default("[]")
+  mobility   String   @default("normal")
+  diet       String   @default("")
+  notes      String   @default("")
+  isDefault  Boolean  @default(false) @map("is_default")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("companions")
+}
+
+// ============================================================================
+// Notifications
+// ============================================================================
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  type      String   @default("system")
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id                  String   @id @default(uuid()) @db.Uuid
+  userId              String   @unique @map("user_id") @db.Uuid
+  departureReminder   Boolean  @default(true) @map("departure_reminder")
+  reservationReminder Boolean  @default(true) @map("reservation_reminder")
+  shareFeedback       Boolean  @default(true) @map("share_feedback")
+  weatherAlert        Boolean  @default(true) @map("weather_alert")
+  planExpiry          Boolean  @default(true) @map("plan_expiry")
+  emailEnabled        Boolean  @default(false) @map("email_enabled")
+  browserEnabled      Boolean  @default(true) @map("browser_enabled")
+  calendarEnabled     Boolean  @default(false) @map("calendar_enabled")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("notification_preferences")
+}
+
+// ============================================================================
+// Sessions
+// ============================================================================
+
+model UserSession {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  userAgent  String    @default("") @map("user_agent")
+  ipAddress  String    @default("") @map("ip_address")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  lastSeenAt DateTime  @default(now()) @map("last_seen_at")
+  revokedAt  DateTime? @map("revoked_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_sessions")
+}

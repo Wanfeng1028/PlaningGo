@@ -5,6 +5,7 @@ import { Modal } from "./components/Modal";
 import { NavBar } from "./components/NavBar";
 import { PageTransition } from "./components/PageTransition";
 import { designHighlights } from "./data/content";
+import { setAuthToken } from "./lib/api";
 import type { ModalKey, NavKey, SessionUser } from "./types";
 import { CasesPage } from "./pages/CasesPage";
 import { DevelopersPage } from "./pages/DevelopersPage";
@@ -25,7 +26,12 @@ function isAuthModal(key: ModalKey | null): key is AuthModalKey {
 export function App() {
   const [active, setActive] = useState<NavKey>("home");
   const [modal, setModal] = useState<ModalKey | null>(null);
-  const [user, setUser] = useState<SessionUser | null>(null);
+  const [user, setUser] = useState<SessionUser | null>(() => {
+    try {
+      const stored = localStorage.getItem("pg_user");
+      return stored ? JSON.parse(stored) as SessionUser : null;
+    } catch { return null; }
+  });
   const [authRedirectTo, setAuthRedirectTo] = useState<NavKey | null>(null);
 
   const openModal = (key: ModalKey) => {
@@ -43,8 +49,10 @@ export function App() {
     setAuthRedirectTo(null);
   };
 
-  const handleAuthSuccess = (nextUser: SessionUser) => {
+  const handleAuthSuccess = (nextUser: SessionUser, token?: string) => {
     setUser(nextUser);
+    localStorage.setItem("pg_user", JSON.stringify(nextUser));
+    if (token) setAuthToken(token);
     setActive(authRedirectTo ?? "features");
     setAuthRedirectTo(null);
   };
@@ -76,7 +84,16 @@ export function App() {
 
       case "profile":
         return user ? (
-          <ProfilePage onOpenModal={openModal} />
+          <ProfilePage
+            user={user}
+            onOpenModal={openModal}
+            onLogout={() => {
+              setUser(null);
+              setAuthToken(null);
+              localStorage.removeItem("pg_user");
+              setAuthRedirectTo(null);
+            }}
+          />
         ) : (
           <ProfileGatePage onNavigate={setActive} onOpenModal={openModal} />
         );
@@ -101,6 +118,8 @@ export function App() {
         user={user}
         onLogout={() => {
           setUser(null);
+          setAuthToken(null);
+          localStorage.removeItem("pg_user");
           setAuthRedirectTo(null);
         }}
       />
@@ -117,7 +136,7 @@ export function App() {
       <BottomTabs active={active} onNavigate={setActive} />
 
       {isAuthModal(modal) ? (
-        <AuthModal mode={modal} onClose={closeModal} onSuccess={handleAuthSuccess} />
+        <AuthModal mode={modal} onClose={closeModal} onSuccess={handleAuthSuccess} onSwitchMode={setModal} />
       ) : (
         <Modal modal={modal} onClose={closeModal} />
       )}

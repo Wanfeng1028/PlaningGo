@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "../components/Button";
+import { RevealGroup } from "../components/RevealGroup";
 import type { ModalKey, NavKey } from "../types";
 import styles from "./Pages.module.scss";
 
@@ -50,7 +51,7 @@ export function ProfileGatePage({ onNavigate, onOpenModal }: ProfileGatePageProp
         <p>建议登录或注册。使用登录和注册能够更精准的完成任务规划！</p>
       </div>
 
-      <div className={styles.profileGateGrid}>
+      <RevealGroup className={styles.profileGateGrid} delayStep={80}>
         {accessOptions.map((option) => (
           <article
             className={`${styles.profileGateCard} ${
@@ -82,7 +83,7 @@ export function ProfileGatePage({ onNavigate, onOpenModal }: ProfileGatePageProp
             </Button>
           </article>
         ))}
-      </div>
+      </RevealGroup>
 
       <p className={styles.profileGateHint}>
         

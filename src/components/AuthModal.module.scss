@@ -1,109 +1,481 @@
-.form {
+// =============================================================================
+// AuthModal — 认证弹窗样式
+// 复用 _glass.scss 玻璃拟态 mixin，保持项目暖色系风格
+// =============================================================================
+
+@use "../styles/glass" as glass;
+
+/* ─── Backdrop ─── */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(var(--color-text-primary-rgb) / 0.26);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* ─── Card ─── */
+.authCard {
+  @include glass.glass-card-base;
+
+  position: relative;
+  width: min(560px, calc(100vw - 32px));
+  padding: clamp(28px, 4vw, 44px);
+  animation: authCardIn 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: center;
+}
+
+.authCard::before {
+  @include glass.glass-card-light;
+}
+
+.authCard::after {
+  @include glass.glass-card-glow;
+  opacity: 0.42;
+}
+
+/* ─── Close ─── */
+.authClose {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--color-text-secondary);
+  background: rgb(var(--color-surface-muted-rgb) / 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: background 180ms var(--ease-out), color 180ms var(--ease-out);
+}
+
+.authClose:hover {
+  color: var(--color-text-primary);
+  background: var(--color-surface-muted);
+}
+
+/* ─── Mode pill ─── */
+.modePill {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+/* ─── Header ─── */
+.authHeader {
+  position: relative;
+  z-index: 1;
+  margin-top: 18px;
+}
+
+.authTitle {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--color-text-primary);
+}
+
+.authSubtitle {
+  margin: 8px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.65;
+  color: var(--color-text-secondary);
+}
+
+/* ─── Form ─── */
+.authForm {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: 16px;
-  margin-top: 20px;
+  margin-top: 22px;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
+/* ─── Field ─── */
 .field {
   display: grid;
   gap: 8px;
 }
 
-.field label {
-  color: var(--color-text-primary);
+.fieldLabel {
   font-size: 13px;
   font-weight: 900;
+  color: var(--color-text-primary);
+  letter-spacing: 0.02em;
 }
 
-.field input,
-.field select {
+.inputWrap {
+  position: relative;
+}
+
+.input {
   width: 100%;
-  min-height: 46px;
-  min-width: 0;
-  padding: 0 14px;
-  border: 1px solid var(--color-border);
-  border-radius: 18px;
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.stepper {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-top: 18px;
-}
-
-.step {
-  min-height: 8px;
-  border-radius: var(--radius-pill);
-  background: var(--color-surface-muted);
-}
-
-.stepActive {
-  background: var(--color-brand);
-}
-
-.hint {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: 13px;
-  font-weight: 800;
-  line-height: 1.65;
-}
-
-.error {
-  padding: 12px;
-  border-radius: 16px;
-  background: rgb(var(--color-danger-rgb) / 0.12);
-  color: var(--color-danger);
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 6px;
-}
-
-.guestCard {
-  padding: 16px;
+  height: 54px;
+  padding: 0 54px 0 18px;
   border: 1px solid var(--color-border);
   border-radius: 20px;
-  background: var(--color-surface-muted);
-}
-
-.guestCard strong {
-  display: block;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
   font-size: 15px;
-  font-weight: 900;
+  font-weight: 700;
+  transition:
+    border-color 180ms var(--ease-out),
+    box-shadow 180ms var(--ease-out);
 }
 
-.guestCard span {
-  display: block;
-  margin-top: 6px;
+.passwordToggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.48);
   color: var(--color-text-secondary);
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition:
+    background 180ms var(--ease-out),
+    color 180ms var(--ease-out);
+}
+
+.passwordToggle:hover {
+  background: rgb(255 255 255 / 0.78);
+  color: var(--color-text-primary);
+}
+
+.passwordToggle:focus-visible {
+  outline: 2px solid rgb(var(--color-brand-rgb) / 0.7);
+  outline-offset: 2px;
+}
+
+.input::placeholder {
+  color: rgb(var(--color-text-secondary-rgb) / 0.5);
+  font-weight: 600;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow:
+    0 0 0 3px rgb(var(--color-brand-rgb) / 0.16),
+    var(--shadow-xs);
+}
+
+/* ─── Error ─── */
+.error {
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: rgb(var(--color-danger-rgb) / 0.1);
+  color: var(--color-danger);
   font-size: 13px;
   font-weight: 800;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
-@media (max-width: 600px) {
-  .grid {
-    grid-template-columns: 1fr;
+/* ─── Google button ─── */
+.googleButton {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 180ms var(--ease-out),
+    box-shadow 180ms var(--ease-out),
+    border-color 180ms var(--ease-out);
+}
+
+.googleButton:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-warm);
+  box-shadow: var(--shadow-xs);
+}
+
+.googleIcon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+/* ─── Divider ─── */
+.divider {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+
+  span {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--color-border) 20%,
+      var(--color-border) 80%,
+      transparent 100%
+    );
+  }
+}
+
+/* ─── Switch / text buttons ─── */
+.switchLine {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.6;
+  cursor: default;
+}
+
+.textButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 900;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 180ms var(--ease-out);
+}
+
+.textButton:hover {
+  color: var(--color-brand-hover);
+}
+
+/* ─── Hint ─── */
+.hint {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgb(var(--color-surface-muted-rgb) / 0.5);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
+
+/* ─── Guest summary ─── */
+.guestSummary {
+  position: relative;
+  z-index: 1;
+}
+
+.guestSummaryLabel {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.04em;
+}
+
+.guestPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.guestPill {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.5);
+
+  em {
+    font-style: normal;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--color-text-secondary);
+    letter-spacing: 0.03em;
   }
 
-  .actions {
-    display: grid;
+  strong {
+    font-size: 14px;
+    font-weight: 900;
+    color: var(--color-text-primary);
+  }
+}
+
+/* ─── Google notice overlay ─── */
+.noticeLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  background: rgb(var(--color-surface-rgb) / 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: noticeIn 200ms var(--ease-out) both;
+}
+
+.noticeCard {
+  width: min(360px, calc(100% - 48px));
+  padding: 28px 24px 24px;
+  border-radius: 24px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+
+  h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--color-text-primary);
+  }
+
+  p {
+    margin: 10px 0 18px;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.65;
+    color: var(--color-text-secondary);
+  }
+}
+
+/* ─── Animations ─── */
+@keyframes authCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes noticeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .authCard {
+    animation: none;
+  }
+
+  .noticeLayer {
+    animation: none;
+  }
+
+  .input {
+    transition: none;
+  }
+
+  .authClose,
+  .googleButton,
+  .textButton,
+  .passwordToggle {
+    transition: none;
+  }
+}
+
+/* ─── Short screen fallback ─── */
+@media (max-height: 720px) {
+  .authCard {
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+}
+
+/* ─── Mobile ─── */
+@media (max-width: 600px) {
+  .backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .authCard {
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    border-radius: 28px 28px 0 0;
+    padding: 36px 24px 28px;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .authTitle {
+    font-size: 24px;
+  }
+
+  .guestPills {
+    gap: 6px;
+  }
+
+  .guestPill {
+    padding: 8px 12px;
+    border-radius: 14px;
+
+    em {
+      font-size: 10px;
+    }
+
+    strong {
+      font-size: 13px;
+    }
   }
 }

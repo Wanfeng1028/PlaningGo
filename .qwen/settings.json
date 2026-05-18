@@ -9,7 +9,13 @@
       "Bash(git stash)",
       "Bash(timeout *)",
       "Bash(curl *)",
-      "Bash(del *)"
+      "Bash(del *)",
+      "Bash(pnpm add *)",
+      "Bash(npm ls *)",
+      "Bash(node *)",
+      "Bash(type *)",
+      "Bash(powershell *)",
+      "Bash(git checkout *)"
     ]
   },
   "$version": 4

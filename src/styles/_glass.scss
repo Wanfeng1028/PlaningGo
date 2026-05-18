@@ -85,3 +85,38 @@
     z-index: 1;
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 轻量玻璃底座：只含视觉属性，不含卡片布局（border-radius / min-height 等）
+// 供导航栏、面板等非卡片容器复用，参数完全来自 glass-card-base
+// ─────────────────────────────────────────────────────────────────────────────
+@mixin glass-surface {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.46);
+  background:
+    linear-gradient(148deg, rgb(255 255 255 / 0.22) 0%, rgb(255 255 255 / 0.1) 48%, rgb(255 255 255 / 0.05) 100%),
+    rgb(255 255 255 / 0.04);
+  box-shadow:
+    0 14px 34px rgb(var(--color-text-primary-rgb) / 0.06),
+    inset 0 1px 0 rgb(255 255 255 / 0.62),
+    inset 0 -1px 0 rgb(255 255 255 / 0.12);
+  backdrop-filter: blur(26px) saturate(1.2);
+  -webkit-backdrop-filter: blur(26px) saturate(1.2);
+  transition:
+    transform 180ms var(--ease-out),
+    box-shadow 180ms var(--ease-out),
+    border-color 180ms var(--ease-out),
+    background 180ms var(--ease-out);
+}
+
+// 轻量 hover：来自 glass-card-hover，但更轻（translateY -1px）
+@mixin glass-surface-hover {
+  transform: translateY(-1px);
+  border-color: rgb(255 255 255 / 0.58);
+  box-shadow:
+    0 18px 40px rgb(var(--color-text-primary-rgb) / 0.08),
+    inset 0 1px 0 rgb(255 255 255 / 0.72),
+    inset 0 -1px 0 rgb(255 255 255 / 0.12);
+}
