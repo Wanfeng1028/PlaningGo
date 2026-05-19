@@ -51,7 +51,13 @@
   }
 
   .footer {
-    padding-bottom: 112px;
+    padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
     flex-direction: column;
+  }
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 24px 0 100px;
   }
 }

@@ -155,6 +155,12 @@ a {
   :root {
     --layout-page-gutter: 10px;
     --layout-content-gutter: 12px;
-    --layout-shell-width: calc(100vw - (var(--layout-page-gutter) * 2));
+  }
+}
+
+@media (max-width: 600px) {
+  :root {
+    --layout-page-gutter: 6px;
+    --layout-content-gutter: 10px;
   }
 }

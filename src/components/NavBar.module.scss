@@ -4,7 +4,7 @@
   @include glass.glass-surface;
 
   position: sticky;
-  top: 24px;
+  top: calc(24px + env(safe-area-inset-top, 0px));
   z-index: 50;
   width: var(--layout-shell-width);
   height: 76px;
@@ -117,8 +117,8 @@
 }
 
 .loginLink {
-  min-height: 40px;
-  padding: 0 12px;
+  min-height: 44px;
+  padding: 0 14px;
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--color-text-primary);
@@ -136,7 +136,7 @@
 }
 
 .userBadge {
-  min-height: 40px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   padding: 0 16px;
@@ -170,7 +170,7 @@
 
 @media (max-width: 900px) {
   .nav {
-    top: 14px;
+    top: calc(14px + env(safe-area-inset-top, 0px));
     height: 58px;
     grid-template-columns: auto auto;
     justify-content: space-between;
@@ -210,9 +210,9 @@
     @include glass.glass-surface;
 
     position: fixed;
-    left: 16px;
-    right: 16px;
-    top: 84px;
+    left: max(16px, env(safe-area-inset-left));
+    right: max(16px, env(safe-area-inset-right));
+    top: calc(14px + env(safe-area-inset-top, 0px) + 58px + 4px);
     z-index: 49;
     display: grid;
     gap: 10px;

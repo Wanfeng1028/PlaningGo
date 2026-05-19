@@ -547,7 +547,7 @@
 
 .insightsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   gap: 16px;
   margin-bottom: 28px;
 }
@@ -659,8 +659,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 8px;
   border: none;
   background: transparent;
@@ -724,7 +724,7 @@
 
 .companionGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
   gap: 16px;
   margin-bottom: 20px;
 }
@@ -914,12 +914,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  min-width: 44px;
+  min-height: 44px;
   border: none;
   background: transparent;
   cursor: pointer;
-  padding: 0;
+  padding: 8px;
   color: var(--color-border);
   transition: color 180ms var(--ease-out);
 
@@ -936,8 +936,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 8px;
   border: none;
   background: transparent;
@@ -966,8 +966,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 8px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
@@ -1079,8 +1079,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 8px;
   border: none;
   background: transparent;
@@ -1449,6 +1449,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  overflow-x: auto;
 }
 
 .toolLogTable th {
@@ -1724,5 +1725,49 @@
 
   .addMemoryRow {
     grid-template-columns: 1fr;
+  }
+
+  .tabTitle {
+    font-size: 20px;
+  }
+
+  .glassCard {
+    padding: 16px;
+  }
+
+  .registerCta {
+    padding: 32px 16px;
+  }
+
+  .devStatValue {
+    font-size: 22px;
+  }
+
+  .riskToggle {
+    flex-direction: column;
+  }
+
+  .historyItem {
+    flex-direction: column;
+
+    .historyActions {
+      align-self: flex-end;
+    }
+  }
+
+  .fieldSlider {
+    input[type="range"] {
+      height: 8px;
+
+      &::-webkit-slider-thumb {
+        width: 28px;
+        height: 28px;
+      }
+
+      &::-moz-range-thumb {
+        width: 28px;
+        height: 28px;
+      }
+    }
   }
 }

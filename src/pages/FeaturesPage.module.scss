@@ -60,7 +60,7 @@
 
 .productShell {
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr);
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
   gap: 24px;
   align-items: start;
 }
@@ -86,7 +86,7 @@
 
 .railHeader h1 {
   margin: 14px 0 0;
-  font-size: 28px;
+  font-size: clamp(1.25rem, 4vw, 1.75rem);
   font-weight: 900;
   line-height: 1.16;
 }
@@ -119,7 +119,7 @@
   outline: 0;
   background: transparent;
   color: var(--color-text-primary);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 800;
 }
 
@@ -131,7 +131,7 @@
 }
 
 .groupTabs button {
-  min-height: 34px;
+  min-height: 44px;
   padding: 0 12px;
   border-radius: var(--radius-pill);
   border: 1px solid rgb(255 255 255 / 0.42);
@@ -456,7 +456,7 @@
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(420px, 1.05fr);
+  grid-template-columns: minmax(0, 0.95fr) minmax(min(420px, 50vw), 1.05fr);
   gap: 24px;
   align-items: stretch;
 }
@@ -581,7 +581,7 @@
 
 .mainGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
   gap: 24px;
 }
 
@@ -754,7 +754,7 @@
 
 .metricRow {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin: 18px 0;
 }
@@ -786,7 +786,7 @@
 
 .split {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.85fr);
+  grid-template-columns: minmax(0, 1fr) minmax(min(360px, 50vw), 0.85fr);
   gap: 24px;
 }
 
@@ -895,5 +895,13 @@
 
   .composer {
     grid-template-columns: 1fr;
+  }
+
+  .workspace {
+    gap: 16px;
+  }
+
+  .productShell {
+    gap: 16px;
   }
 }
