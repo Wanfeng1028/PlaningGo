@@ -27,7 +27,7 @@ export async function registerPrivacyRoutes(app: FastifyInstance) {
         db.notification.findMany({ where: { userId } }),
         db.userSession.findMany({ where: { userId }, select: { id: true, userAgent: true, ipAddress: true, createdAt: true, lastSeenAt: true } }),
         db.apiKey.findMany({ where: { userId }, select: { id: true, name: true, prefix: true, status: true, createdAt: true } }),
-        db.webhook.findMany({ where: { userId }, select: { id: true, url: true, event: true, enabled: true, createdAt: true } }),
+        db.webhook.findMany({ where: { userId }, select: { id: true, url: true, events: true, enabled: true, createdAt: true } }),
       ]);
 
     sendOk(reply, {

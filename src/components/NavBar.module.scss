@@ -116,6 +116,55 @@
   gap: 12px;
 }
 
+.locationPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 180ms var(--ease-out), border-color 180ms var(--ease-out);
+
+  span {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.locationPill:hover {
+  background: var(--color-surface-warm);
+  border-color: var(--color-border-strong);
+}
+
+.locationPillMuted {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: 1px dashed var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 180ms var(--ease-out), color 180ms var(--ease-out);
+}
+
+.locationPillMuted:hover {
+  background: var(--color-surface-warm);
+  color: var(--color-text-primary);
+}
+
 .loginLink {
   min-height: 44px;
   padding: 0 14px;
@@ -237,5 +286,27 @@
     grid-template-columns: 1fr 1fr;
     gap: 10px;
     margin-top: 8px;
+  }
+
+  .mobileLocationPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+
+    span {
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 }

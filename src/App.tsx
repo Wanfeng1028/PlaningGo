@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { AuthModal } from "./components/AuthModal";
 import { BottomTabs } from "./components/BottomTabs";
 import { Modal } from "./components/Modal";
 import { NavBar } from "./components/NavBar";
 import { PageTransition } from "./components/PageTransition";
 import { designHighlights } from "./data/content";
-import { setAuthToken } from "./lib/api";
+import { setAuthToken, reverseGeocode } from "./lib/api";
+import { requestBrowserLocation } from "./lib/location";
 import type { ModalKey, NavKey, SessionUser } from "./types";
 import { CasesPage } from "./pages/CasesPage";
-import { DevelopersPage } from "./pages/DevelopersPage";
+import DevelopersPage from "./pages/DevelopersPage";
 import { FeaturesPage } from "./pages/FeaturesPage";
 import { FlowPage } from "./pages/FlowPage";
 import { HomePage } from "./pages/HomePage";
@@ -57,6 +58,45 @@ export function App() {
     setAuthRedirectTo(null);
   };
 
+  const handleRequestLocation = useCallback(async () => {
+    try {
+      const pos = await requestBrowserLocation();
+      try {
+        const geo = await reverseGeocode(pos.latitude, pos.longitude);
+        const label = geo.formattedAddress || `${geo.city}${geo.district}`;
+        setUser((prev) => {
+          if (!prev) return prev;
+          const updated: SessionUser = {
+            ...prev,
+            city: geo.city || prev.city,
+            locationLabel: label,
+            latitude: pos.latitude,
+            longitude: pos.longitude,
+            locationSource: "browser",
+          };
+          localStorage.setItem("pg_user", JSON.stringify(updated));
+          return updated;
+        });
+      } catch {
+        // 逆地理编码失败，仅保存坐标
+        setUser((prev) => {
+          if (!prev) return prev;
+          const updated: SessionUser = {
+            ...prev,
+            locationLabel: `${pos.latitude.toFixed(3)}, ${pos.longitude.toFixed(3)}`,
+            latitude: pos.latitude,
+            longitude: pos.longitude,
+            locationSource: "browser",
+          };
+          localStorage.setItem("pg_user", JSON.stringify(updated));
+          return updated;
+        });
+      }
+    } catch {
+      // 定位失败，静默处理
+    }
+  }, []);
+
   const page = (() => {
     switch (active) {
       case "home":
@@ -80,7 +120,7 @@ export function App() {
         );
 
       case "developers":
-        return <DevelopersPage onOpenModal={openModal} />;
+        return <DevelopersPage onOpenModal={openModal} user={user} />;
 
       case "profile":
         return user ? (
@@ -116,6 +156,7 @@ export function App() {
         onNavigate={setActive}
         onOpenModal={openModal}
         user={user}
+        onRequestLocation={handleRequestLocation}
         onLogout={() => {
           setUser(null);
           setAuthToken(null);

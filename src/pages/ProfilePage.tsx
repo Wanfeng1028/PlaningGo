@@ -549,7 +549,7 @@ export function ProfilePage({ user, onOpenModal, onLogout }: ProfilePageProps) {
   };
 
   const handleCopyKey = (text: string) => {
-    navigator.clipboard.writeText(text).catch(() => {});
+    navigator.clipboard.writeText(text).catch(() => { });
     flash("已复制");
   };
 
@@ -1327,9 +1327,9 @@ export function ProfilePage({ user, onOpenModal, onLogout }: ProfilePageProps) {
             <div key={w.id} className={styles.webhookItem}>
               <div className={styles.webhookInfo}>
                 <div className={styles.webhookUrl}>{w.url}</div>
-                <div className={styles.webhookEvent}>{w.event}</div>
+                <div className={styles.webhookEvent}>{w.events.join(", ")}</div>
               </div>
-              <span className={`${styles.webhookStatus} ${w.lastDeliveryStatus === "failed" ? styles.webhookStatusFail : ""}`}>
+              <span className={`${styles.webhookStatus} ${!w.enabled ? styles.webhookStatusFail : ""}`}>
                 {w.enabled ? "活跃" : "禁用"}
               </span>
               <div className={styles.webhookActions}>

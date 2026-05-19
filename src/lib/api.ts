@@ -9,9 +9,16 @@ import type {
   NotificationPreferences,
   PermissionSettings,
   SessionInfo,
-  ApiKeyInfo,
-  WebhookInfo,
-  ToolLogItem,
+  GuestProfileInput,
+  DeveloperApp,
+  DeveloperApiKey,
+  DeveloperDashboard,
+  DeveloperUsage,
+  DeveloperRequestLog,
+  DeveloperWebhook,
+  WebhookDelivery,
+  DeveloperSecurity,
+  DeveloperSandboxResult,
 } from "../types";
 
 export interface AgentPlanResponse {
@@ -36,6 +43,10 @@ export interface AuthResponse {
   profile?: {
     city: string;
     startPoint: string;
+    homeLat?: number;
+    homeLng?: number;
+    locationLabel?: string;
+    locationSource?: string;
   };
   onboardingSteps?: string[];
   expiresInMinutes?: number;
@@ -148,10 +159,10 @@ export async function register(input: {
   });
 }
 
-export async function enterAsGuest(input: { city: string; startPoint: string; companions: string }): Promise<AuthResponse> {
+export async function enterAsGuest(profile: GuestProfileInput): Promise<AuthResponse> {
   return apiJson<AuthResponse>("/api/auth/guest", {
     method: "POST",
-    body: JSON.stringify(input),
+    body: JSON.stringify(profile),
   });
 }
 
@@ -361,42 +372,121 @@ export async function updateAccount(input: { displayName?: string; city?: string
 
 // ── Profile: 开发者模式 ──
 
-export async function getDeveloperDashboard(): Promise<{
-  metrics: Array<{ label: string; value: string }>;
-  apiKeys: ApiKeyInfo[];
-  webhooks: WebhookInfo[];
-}> {
-  return apiJson("/api/developer/dashboard");
+export async function getDeveloperDashboard(): Promise<DeveloperDashboard> {
+  return apiJson<DeveloperDashboard>("/api/developer/dashboard");
 }
 
-export async function listApiKeys(): Promise<ApiKeyInfo[]> {
-  return apiJson<ApiKeyInfo[]>("/api/developer/apikeys");
+// -- Developer Apps --
+export async function getDeveloperApps(): Promise<DeveloperApp[]> {
+  return apiJson<DeveloperApp[]>("/api/developer/apps");
 }
 
-export async function createNewApiKey(name: string): Promise<{ key: string }> {
-  return apiJson("/api/developer/apikeys", {
-    method: "POST",
-    body: JSON.stringify({ name }),
-  });
-}
-
-export async function revokeApiKey(id: string) {
-  return apiJson(`/api/developer/apikeys/${id}`, { method: "DELETE" });
-}
-
-export async function listWebhooks(): Promise<WebhookInfo[]> {
-  return apiJson<WebhookInfo[]>("/api/developer/webhooks");
-}
-
-export async function createWebhook(input: { url: string; event: string }) {
-  return apiJson("/api/developer/webhooks", {
+export async function createDeveloperApp(input: {
+  name: string;
+  description?: string;
+  environment?: string;
+  callbackDomain?: string;
+}): Promise<DeveloperApp> {
+  return apiJson<DeveloperApp>("/api/developer/apps", {
     method: "POST",
     body: JSON.stringify(input),
   });
 }
 
-export async function updateWebhook(id: string, input: Partial<{ url: string; event: string; enabled: boolean }>) {
-  return apiJson(`/api/developer/webhooks/${id}`, {
+export async function updateDeveloperApp(id: string, input: {
+  name?: string;
+  description?: string;
+  environment?: string;
+  callbackDomain?: string;
+  status?: string;
+}): Promise<DeveloperApp> {
+  return apiJson<DeveloperApp>(`/api/developer/apps/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteDeveloperApp(id: string) {
+  return apiJson(`/api/developer/apps/${id}`, { method: "DELETE" });
+}
+
+// -- API Keys --
+export async function getApiKeys(): Promise<DeveloperApiKey[]> {
+  return apiJson<DeveloperApiKey[]>("/api/developer/api-keys");
+}
+
+export async function createApiKey(input: {
+  name: string;
+  appId?: string;
+  scopes?: string[];
+  environment?: string;
+  expiresIn?: string;
+}): Promise<DeveloperApiKey> {
+  return apiJson<DeveloperApiKey>("/api/developer/api-keys", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function revokeApiKey(id: string): Promise<DeveloperApiKey> {
+  return apiJson<DeveloperApiKey>(`/api/developer/api-keys/${id}/revoke`, {
+    method: "POST",
+  });
+}
+
+export async function revokeAllApiKeys(): Promise<{ revokedCount: number }> {
+  return apiJson("/api/developer/api-keys/revoke-all", { method: "POST" });
+}
+
+// -- Usage --
+export async function getDeveloperUsage(range = "7d"): Promise<DeveloperUsage> {
+  return apiJson<DeveloperUsage>(`/api/developer/usage?range=${range}`);
+}
+
+// -- Request Logs --
+export async function getDeveloperRequestLogs(params: {
+  page?: number;
+  pageSize?: number;
+  status?: string;
+  path?: string;
+  traceId?: string;
+} = {}): Promise<{ items: DeveloperRequestLog[]; total: number; page: number; pageSize: number }> {
+  const qs = new URLSearchParams();
+  if (params.page) qs.set("page", String(params.page));
+  if (params.pageSize) qs.set("pageSize", String(params.pageSize));
+  if (params.status) qs.set("status", params.status);
+  if (params.path) qs.set("path", params.path);
+  if (params.traceId) qs.set("traceId", params.traceId);
+  return apiJson(`/api/developer/request-logs?${qs.toString()}`);
+}
+
+export async function getDeveloperRequestLog(id: string): Promise<DeveloperRequestLog> {
+  return apiJson<DeveloperRequestLog>(`/api/developer/request-logs/${id}`);
+}
+
+// -- Webhooks --
+export async function getWebhooks(): Promise<DeveloperWebhook[]> {
+  return apiJson<DeveloperWebhook[]>("/api/developer/webhooks");
+}
+
+export async function createWebhook(input: {
+  url: string;
+  events: string[];
+  appId?: string;
+}): Promise<DeveloperWebhook> {
+  return apiJson<DeveloperWebhook>("/api/developer/webhooks", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateWebhook(id: string, input: {
+  url?: string;
+  events?: string[];
+  enabled?: boolean;
+  appId?: string;
+}): Promise<DeveloperWebhook> {
+  return apiJson<DeveloperWebhook>(`/api/developer/webhooks/${id}`, {
     method: "PATCH",
     body: JSON.stringify(input),
   });
@@ -406,14 +496,65 @@ export async function deleteWebhook(id: string) {
   return apiJson(`/api/developer/webhooks/${id}`, { method: "DELETE" });
 }
 
-export async function replayWebhook(id: string) {
-  return apiJson(`/api/developer/webhooks/${id}/replay`, { method: "POST" });
+export async function testWebhook(id: string): Promise<WebhookDelivery> {
+  return apiJson<WebhookDelivery>(`/api/developer/webhooks/${id}/test`, {
+    method: "POST",
+  });
 }
 
-export async function getWebhookDeliveries(id: string) {
-  return apiJson(`/api/developer/webhooks/${id}/deliveries`);
+export async function replayWebhook(id: string): Promise<WebhookDelivery> {
+  return apiJson<WebhookDelivery>(`/api/developer/webhooks/${id}/replay`, {
+    method: "POST",
+  });
 }
 
-export async function getToolLogs(page = 1, pageSize = 20): Promise<{ items: ToolLogItem[]; total: number }> {
-  return apiJson(`/api/developer/logs?page=${page}&pageSize=${pageSize}`);
+export async function getWebhookDeliveries(webhookId?: string, limit = 50): Promise<WebhookDelivery[]> {
+  const qs = new URLSearchParams();
+  if (webhookId) qs.set("webhookId", webhookId);
+  qs.set("limit", String(limit));
+  return apiJson<WebhookDelivery[]>(`/api/developer/webhook-deliveries?${qs.toString()}`);
+}
+
+export async function rotateWebhookSecret(id: string): Promise<DeveloperWebhook> {
+  return apiJson<DeveloperWebhook>(`/api/developer/webhooks/${id}/rotate-secret`, {
+    method: "POST",
+  });
+}
+
+// -- Sandbox --
+export async function runDeveloperSandbox(input: {
+  endpoint: string;
+  method?: string;
+  body?: Record<string, unknown>;
+}): Promise<DeveloperSandboxResult> {
+  return apiJson<DeveloperSandboxResult>("/api/developer/sandbox/run", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+// -- Security --
+export async function getDeveloperSecurity(): Promise<DeveloperSecurity> {
+  return apiJson<DeveloperSecurity>("/api/developer/security");
+}
+
+// ── 兼容旧方法名 ──
+export const listApiKeys = getApiKeys;
+export const createNewApiKey = (name: string) => createApiKey({ name });
+export const listWebhooks = getWebhooks;
+export const getWebhookDeliveriesByWebhook = getWebhookDeliveries;
+export const getToolLogs = (page = 1, pageSize = 20) =>
+  getDeveloperRequestLogs({ page, pageSize });
+
+// ── Location: 逆地理编码 ──
+
+export interface ReverseGeocodeResult {
+  city: string;
+  district: string;
+  address: string;
+  formattedAddress: string;
+}
+
+export async function reverseGeocode(lat: number, lng: number): Promise<ReverseGeocodeResult> {
+  return apiJson<ReverseGeocodeResult>(`/api/location/reverse-geocode?lat=${lat}&lng=${lng}`);
 }

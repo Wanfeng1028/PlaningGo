@@ -1,4 +1,4 @@
-import { Menu, X } from "lucide-react";
+import { Menu, X, MapPin, Navigation } from "lucide-react";
 import { useState } from "react";
 import { navItems } from "../data/navigation";
 import type { ModalKey, NavKey, SessionUser } from "../types";
@@ -11,15 +11,18 @@ interface NavBarProps {
   onOpenModal: (key: ModalKey) => void;
   user: SessionUser | null;
   onLogout: () => void;
+  onRequestLocation?: () => void;
 }
 
-export function NavBar({ active, onNavigate, onOpenModal, user, onLogout }: NavBarProps) {
+export function NavBar({ active, onNavigate, onOpenModal, user, onLogout, onRequestLocation }: NavBarProps) {
   const [open, setOpen] = useState(false);
 
   const handleNavigate = (key: NavKey) => {
     onNavigate(key);
     setOpen(false);
   };
+
+  const locationLabel = user?.locationLabel || user?.city || "";
 
   return (
     <>
@@ -42,6 +45,29 @@ export function NavBar({ active, onNavigate, onOpenModal, user, onLogout }: NavB
           ))}
         </div>
         <div className={styles.actions}>
+          {/* 定位 pill */}
+          {user && locationLabel ? (
+            <button
+              type="button"
+              className={styles.locationPill}
+              onClick={onRequestLocation}
+              title="点击重新定位"
+            >
+              <MapPin size={14} />
+              <span>{locationLabel}</span>
+            </button>
+          ) : user && onRequestLocation ? (
+            <button
+              type="button"
+              className={styles.locationPillMuted}
+              onClick={onRequestLocation}
+              title="开启定位"
+            >
+              <Navigation size={14} />
+              <span>定位</span>
+            </button>
+          ) : null}
+
           {user ? (
             <>
               <button className={styles.userBadge} type="button" onClick={() => handleNavigate("profile")}>
@@ -76,6 +102,18 @@ export function NavBar({ active, onNavigate, onOpenModal, user, onLogout }: NavB
             {item.label}
           </button>
         ))}
+
+        {user && locationLabel ? (
+          <button
+            type="button"
+            className={styles.mobileLocationPill}
+            onClick={() => { onRequestLocation?.(); setOpen(false); }}
+          >
+            <MapPin size={14} />
+            <span>{locationLabel}</span>
+          </button>
+        ) : null}
+
         <div className={styles.mobileActions}>
           {user ? (
             <>

@@ -33,8 +33,11 @@ model User {
   executionSteps  ExecutionStep[]
   shareRooms      ShareRoom[]
   memories        Memory[]
+  developerApps   DeveloperApp[]
   apiKeys         ApiKey[]
   webhooks        Webhook[]
+  requestLogs     RequestLog[]
+  usageDaily      DeveloperUsageDaily[]
   auditLogs       AuditLog[]
   llmCallLogs     LlmCallLog[]
   toolCallLogs    ToolCallLog[]
@@ -374,35 +377,61 @@ model Memory {
 // Developer
 // ============================================================================
 
-model ApiKey {
-  id         String    @id @default(uuid()) @db.Uuid
-  userId     String    @map("user_id") @db.Uuid
-  name       String
-  keyHash    String    @map("key_hash")
-  prefix     String
-  status     String    @default("active")
-  lastUsedAt DateTime? @map("last_used_at")
-  revokedAt  DateTime? @map("revoked_at")
-  createdAt  DateTime  @default(now()) @map("created_at")
-  scopes     Json      @default("[]")
+model DeveloperApp {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  name            String
+  description     String   @default("")
+  environment     String   @default("sandbox")
+  callbackDomain  String   @default("") @map("callback_domain")
+  status          String   @default("active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  apiKeys ApiKey[]
+  webhooks Webhook[]
 
   @@index([userId])
+  @@map("developer_apps")
+}
+
+model ApiKey {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  appId       String?   @map("app_id") @db.Uuid
+  name        String
+  keyHash     String    @map("key_hash")
+  prefix      String
+  scopes      Json      @default("[]")
+  status      String    @default("active")
+  environment String    @default("sandbox")
+  expiresAt   DateTime? @map("expires_at")
+  lastUsedAt  DateTime? @map("last_used_at")
+  revokedAt   DateTime? @map("revoked_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  app  DeveloperApp?  @relation(fields: [appId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([keyHash])
   @@map("api_keys")
 }
 
 model Webhook {
   id         String   @id @default(uuid()) @db.Uuid
   userId     String   @map("user_id") @db.Uuid
+  appId      String?  @map("app_id") @db.Uuid
   url        String
-  event      String
+  events     Json     @default("[]")
   secretHash String   @default("") @map("secret_hash")
   enabled    Boolean  @default(true)
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  app        DeveloperApp?      @relation(fields: [appId], references: [id], onDelete: SetNull)
   deliveries WebhookDelivery[]
 
   @@index([userId])
@@ -416,7 +445,7 @@ model WebhookDelivery {
   payload        Json      @default("{}")
   status         String    @default("pending")
   responseStatus Int?      @map("response_status")
-  responseBody   String?   @map("response_body")
+  latencyMs      Int?      @map("latency_ms")
   errorMessage   String?   @map("error_message")
   attemptCount   Int       @default(0) @map("attempt_count")
   nextRetryAt    DateTime? @map("next_retry_at")
@@ -427,6 +456,46 @@ model WebhookDelivery {
 
   @@index([webhookId])
   @@map("webhook_deliveries")
+}
+
+model RequestLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  appId          String?  @map("app_id") @db.Uuid
+  apiKeyPrefix   String   @default("") @map("api_key_prefix")
+  method         String
+  path           String
+  statusCode     Int      @map("status_code")
+  latencyMs      Int      @map("latency_ms")
+  traceId        String   @default("") @map("trace_id")
+  errorCode      String?  @map("error_code")
+  requestPreview Json     @default("{}") @map("request_preview")
+  responsePreview Json    @default("{}") @map("response_preview")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([traceId])
+  @@index([createdAt])
+  @@map("request_logs")
+}
+
+model DeveloperUsageDaily {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  appId       String?  @map("app_id") @db.Uuid
+  date        DateTime @db.Date
+  calls       Int      @default(0)
+  errors      Int      @default(0)
+  avgLatencyMs Int     @default(0) @map("avg_latency_ms")
+  p95LatencyMs Int     @default(0) @map("p95_latency_ms")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, appId, date])
+  @@index([userId])
+  @@map("developer_usage_daily")
 }
 
 // ============================================================================

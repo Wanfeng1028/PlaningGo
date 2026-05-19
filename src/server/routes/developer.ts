@@ -1,13 +1,13 @@
 /**
- * Developer 路由 — Prisma 版
+ * Developer 路由 — 完整开发者控制台 API
+ * Dashboard / Apps / API Keys / Usage / Request Logs / Webhooks / Sandbox / Security
  */
 
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import crypto from "node:crypto";
 import { z } from "zod";
-import { baseToolLogs } from "../data/mockData.js";
 import { sendOk, sendCreated, sendNoContent, sendError } from "../common/response.js";
 import { UnauthorizedError } from "../common/errors.js";
+import { DeveloperRepository } from "../repositories/developerRepository.js";
 
 function uid(req: FastifyRequest): string {
   const id = (req as any).userId;
@@ -15,224 +15,472 @@ function uid(req: FastifyRequest): string {
   return id;
 }
 
+/** 脱敏请求体：移除敏感字段 */
+function sanitizePreview(obj: Record<string, unknown> | null | undefined): Record<string, unknown> {
+  if (!obj || typeof obj !== "object") return {};
+  const sensitive = new Set(["password", "token", "authorization", "apiKey", "refreshToken", "accessToken", "secret", "keyHash"]);
+  const result: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (sensitive.has(k)) {
+      result[k] = "***";
+    } else {
+      result[k] = v;
+    }
+  }
+  return result;
+}
+
 export async function registerDeveloperRoutes(app: FastifyInstance) {
-  const db = app.db;
+  const repo = new DeveloperRepository(app.db);
 
   // ── Dashboard ──
-  app.get("/api/developer/dashboard", async (request, reply) => {
+  app.get("/api/developer/dashboard", { preHandler: [app.authGuard] }, async (request, reply) => {
     const userId = uid(request);
-    const [keys, hooks] = await Promise.all([
-      db.apiKey.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
-      db.webhook.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
-    ]);
-    return sendOk(reply, {
-      metrics: [
-        { label: "规划成功率", value: "94%" },
-        { label: "兜底触发率", value: "18%" },
-        { label: "支付交接率", value: "100%" },
-        { label: "用户确认率", value: "87%" },
-      ],
-      logs: baseToolLogs,
-      apiKeys: keys.map(mapApiKey),
-      webhooks: hooks.map(mapWebhook),
-    });
+    const dashboard = await repo.getDashboardSummary(userId);
+    return sendOk(reply, dashboard);
   });
 
-  // ── API Keys ──
-  app.get("/api/developer/apikeys", async (request, reply) => {
+  // ── Developer Apps ──
+  app.get("/api/developer/apps", { preHandler: [app.authGuard] }, async (request, reply) => {
     const userId = uid(request);
-    const keys = await db.apiKey.findMany({ where: { userId }, orderBy: { createdAt: "desc" } });
-    return sendOk(reply, keys.map(mapApiKey));
+    const apps = await repo.listApps(userId);
+    return sendOk(reply, apps);
   });
 
-  // 兼容旧路径
-  app.get("/api/developer/api-keys", async (request, reply) => {
+  app.post("/api/developer/apps", { preHandler: [app.authGuard] }, async (request, reply) => {
     const userId = uid(request);
-    const keys = await db.apiKey.findMany({ where: { userId }, orderBy: { createdAt: "desc" } });
-    return sendOk(reply, keys.map(mapApiKey));
+    const input = z.object({
+      name: z.string().min(1).max(64),
+      description: z.string().max(256).default(""),
+      environment: z.enum(["sandbox", "production"]).default("sandbox"),
+      callbackDomain: z.string().default(""),
+    }).parse(request.body);
+
+    const app = await repo.createApp(userId, input);
+    return sendCreated(reply, app);
   });
 
-  app.post("/api/developer/apikeys", async (request, reply) => {
+  app.patch("/api/developer/apps/:id", { preHandler: [app.authGuard] }, async (request, reply) => {
     const userId = uid(request);
-    const input = z
-      .object({
-        name: z.string().default("Demo Key"),
-        scopes: z.array(z.string()).default(["plan:read", "tool:read"]),
-      })
-      .parse(request.body ?? {});
+    const { id } = z.object({ id: z.string() }).parse(request.params);
+    const input = z.object({
+      name: z.string().min(1).max(64).optional(),
+      description: z.string().max(256).optional(),
+      environment: z.enum(["sandbox", "production"]).optional(),
+      callbackDomain: z.string().optional(),
+      status: z.enum(["active", "paused"]).optional(),
+    }).parse(request.body);
 
-    const rawKey = `pg_${crypto.randomBytes(32).toString("hex")}`;
-    const keyHash = crypto.createHash("sha256").update(rawKey).digest("hex");
-    const prefix = rawKey.slice(0, 7);
-
-    const apiKey = await db.apiKey.create({
-      data: {
-        userId,
-        name: input.name,
-        keyHash,
-        prefix,
-        scopes: input.scopes as any,
-      },
-    });
-
-    return sendCreated(reply, { ...mapApiKey(apiKey), key: rawKey });
+    const updated = await repo.updateApp(id, userId, input);
+    if (!updated) return sendError(reply, 404, "APP_NOT_FOUND", "应用不存在");
+    return sendOk(reply, updated);
   });
 
-  // 兼容旧路径
-  app.post("/api/developer/api-keys", async (request, reply) => {
-    const userId = uid(request);
-    const input = z
-      .object({
-        name: z.string().default("Demo Key"),
-        scopes: z.array(z.string()).default(["plan:read", "tool:read"]),
-      })
-      .parse(request.body ?? {});
-
-    const rawKey = `pg_${crypto.randomBytes(32).toString("hex")}`;
-    const keyHash = crypto.createHash("sha256").update(rawKey).digest("hex");
-    const prefix = rawKey.slice(0, 7);
-
-    const apiKey = await db.apiKey.create({
-      data: {
-        userId,
-        name: input.name,
-        keyHash,
-        prefix,
-        scopes: input.scopes as any,
-      },
-    });
-
-    return sendCreated(reply, { ...mapApiKey(apiKey), key: rawKey });
-  });
-
-  // DELETE /api/developer/apikeys/:id
-  app.delete("/api/developer/apikeys/:id", async (request, reply) => {
+  app.delete("/api/developer/apps/:id", { preHandler: [app.authGuard] }, async (request, reply) => {
     const userId = uid(request);
     const { id } = z.object({ id: z.string() }).parse(request.params);
 
-    const key = await db.apiKey.findFirst({ where: { id, userId } });
-    if (!key) return sendError(reply, 404, "API_KEY_NOT_FOUND", "API Key 不存在");
-
-    const updated = await db.apiKey.update({
-      where: { id },
-      data: { status: "revoked", revokedAt: new Date() },
-    });
-    return sendOk(reply, mapApiKey(updated));
-  });
-
-  // 兼容旧路径 POST /revoke
-  app.post("/api/developer/api-keys/:id/revoke", async (request, reply) => {
-    const userId = uid(request);
-    const { id } = z.object({ id: z.string() }).parse(request.params);
-
-    const key = await db.apiKey.findFirst({ where: { id, userId } });
-    if (!key) return sendError(reply, 404, "API_KEY_NOT_FOUND", "API Key 不存在");
-
-    const updated = await db.apiKey.update({
-      where: { id },
-      data: { status: "revoked", revokedAt: new Date() },
-    });
-    return sendOk(reply, mapApiKey(updated));
-  });
-
-  // ── Webhooks ──
-  app.get("/api/developer/webhooks", async (request, reply) => {
-    const userId = uid(request);
-    const hooks = await db.webhook.findMany({ where: { userId }, orderBy: { createdAt: "desc" } });
-    return sendOk(reply, hooks.map(mapWebhook));
-  });
-
-  app.post("/api/developer/webhooks", async (request, reply) => {
-    const userId = uid(request);
-    const input = z
-      .object({
-        url: z.string().url(),
-        event: z.enum(["plan.created", "reservation.updated", "execution.failed", "share.voted"]),
-        enabled: z.boolean().default(true),
-      })
-      .parse(request.body);
-
-    const webhook = await db.webhook.create({
-      data: { userId, url: input.url, event: input.event, enabled: input.enabled },
-    });
-    return sendCreated(reply, mapWebhook(webhook));
-  });
-
-  app.patch("/api/developer/webhooks/:id", async (request, reply) => {
-    const userId = uid(request);
-    const { id } = z.object({ id: z.string() }).parse(request.params);
-    const body = z
-      .object({
-        url: z.string().url().optional(),
-        event: z.string().optional(),
-        enabled: z.boolean().optional(),
-      })
-      .parse(request.body);
-
-    const existing = await db.webhook.findFirst({ where: { id, userId } });
-    if (!existing) return sendError(reply, 404, "WEBHOOK_NOT_FOUND", "Webhook 不存在");
-
-    const webhook = await db.webhook.update({ where: { id }, data: body });
-    return sendOk(reply, mapWebhook(webhook));
-  });
-
-  app.delete("/api/developer/webhooks/:id", async (request, reply) => {
-    const userId = uid(request);
-    const { id } = z.object({ id: z.string() }).parse(request.params);
-
-    const existing = await db.webhook.findFirst({ where: { id, userId } });
-    if (!existing) return sendError(reply, 404, "WEBHOOK_NOT_FOUND", "Webhook 不存在");
-
-    await db.webhook.delete({ where: { id } });
+    const deleted = await repo.deleteApp(id, userId);
+    if (!deleted) return sendError(reply, 404, "APP_NOT_FOUND", "应用不存在");
     return sendNoContent(reply);
   });
 
-  app.post("/api/developer/webhooks/:id/replay", async (request, reply) => {
+  // ── API Keys ──
+  app.get("/api/developer/api-keys", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const keys = await repo.listApiKeys(userId);
+    return sendOk(reply, keys.map(mapApiKey));
+  });
+
+  // 兼容旧路径
+  app.get("/api/developer/apikeys", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const keys = await repo.listApiKeys(userId);
+    return sendOk(reply, keys.map(mapApiKey));
+  });
+
+  app.post("/api/developer/api-keys", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const input = z.object({
+      name: z.string().min(1).max(64),
+      appId: z.string().optional(),
+      scopes: z.array(z.string()).default(["plan:read"]),
+      environment: z.enum(["sandbox", "production"]).default("sandbox"),
+      expiresIn: z.enum(["30d", "90d", "never"]).default("90d"),
+    }).parse(request.body);
+
+    let expiresAt: Date | undefined;
+    if (input.expiresIn === "30d") {
+      expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    } else if (input.expiresIn === "90d") {
+      expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+    }
+
+    const { apiKey, rawKey, prefix } = await repo.createApiKey(userId, {
+      name: input.name,
+      appId: input.appId,
+      scopes: input.scopes,
+      environment: input.environment,
+      expiresAt,
+    });
+
+    // 写审计日志
+    await app.db.auditLog.create({
+      data: {
+        userId,
+        action: "api_key.created",
+        resourceType: "api_key",
+        resourceId: apiKey.id,
+        traceId: (request as any).traceId ?? "",
+      },
+    });
+
+    return sendCreated(reply, { ...mapApiKey(apiKey), key: rawKey });
+  });
+
+  // 兼容旧路径
+  app.post("/api/developer/apikeys", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const input = z.object({
+      name: z.string().default("Default Key"),
+      scopes: z.array(z.string()).default(["plan:read"]),
+    }).parse(request.body ?? {});
+
+    const { apiKey, rawKey } = await repo.createApiKey(userId, {
+      name: input.name,
+      scopes: input.scopes,
+    });
+
+    return sendCreated(reply, { ...mapApiKey(apiKey), key: rawKey });
+  });
+
+  app.post("/api/developer/api-keys/:id/revoke", { preHandler: [app.authGuard] }, async (request, reply) => {
     const userId = uid(request);
     const { id } = z.object({ id: z.string() }).parse(request.params);
 
-    const webhook = await db.webhook.findFirst({ where: { id, userId } });
-    if (!webhook) return sendError(reply, 404, "WEBHOOK_NOT_FOUND", "Webhook 不存在");
+    const revoked = await repo.revokeApiKey(id, userId);
+    if (!revoked) return sendError(reply, 404, "API_KEY_NOT_FOUND", "API Key 不存在");
 
-    const delivery = await db.webhookDelivery.create({
+    await app.db.auditLog.create({
       data: {
-        webhookId: id,
-        event: webhook.event,
-        payload: {} as any,
-        status: "success",
-        responseStatus: 200,
+        userId,
+        action: "api_key.revoked",
+        resourceType: "api_key",
+        resourceId: id,
+        traceId: (request as any).traceId ?? "",
       },
     });
+
+    return sendOk(reply, mapApiKey(revoked));
+  });
+
+  // 兼容旧路径
+  app.delete("/api/developer/apikeys/:id", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const { id } = z.object({ id: z.string() }).parse(request.params);
+
+    const revoked = await repo.revokeApiKey(id, userId);
+    if (!revoked) return sendError(reply, 404, "API_KEY_NOT_FOUND", "API Key 不存在");
+    return sendOk(reply, mapApiKey(revoked));
+  });
+
+  app.post("/api/developer/api-keys/revoke-all", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const count = await repo.revokeAllApiKeys(userId);
+
+    await app.db.auditLog.create({
+      data: {
+        userId,
+        action: "api_key.revoked_all",
+        resourceType: "api_key",
+        resourceId: "",
+        metadata: { count },
+        traceId: (request as any).traceId ?? "",
+      },
+    });
+
+    return sendOk(reply, { revokedCount: count });
+  });
+
+  // ── Usage ──
+  app.get("/api/developer/usage", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const query = z.object({
+      range: z.enum(["7d", "30d", "90d"]).default("7d"),
+    }).parse(request.query);
+
+    const days = query.range === "30d" ? 30 : query.range === "90d" ? 90 : 7;
+    const usage = await repo.getUsageSummary(userId, days);
+    return sendOk(reply, usage);
+  });
+
+  // ── Request Logs ──
+  app.get("/api/developer/request-logs", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const query = z.object({
+      page: z.coerce.number().int().min(1).default(1),
+      pageSize: z.coerce.number().int().min(1).max(100).default(20),
+      status: z.enum(["all", "success", "error"]).default("all"),
+      path: z.string().optional(),
+      traceId: z.string().optional(),
+    }).parse(request.query);
+
+    const result = await repo.listRequestLogs(userId, {
+      page: query.page,
+      pageSize: query.pageSize,
+      status: query.status === "all" ? undefined : query.status,
+      path: query.path,
+      traceId: query.traceId,
+    });
+
+    return sendOk(reply, {
+      ...result,
+      items: result.items.map(mapRequestLog),
+    });
+  });
+
+  app.get("/api/developer/request-logs/:id", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const { id } = z.object({ id: z.string() }).parse(request.params);
+
+    const log = await repo.findRequestLogById(id, userId);
+    if (!log) return sendError(reply, 404, "LOG_NOT_FOUND", "请求记录不存在");
+
+    return sendOk(reply, {
+      ...mapRequestLog(log),
+      requestPreview: sanitizePreview(log.requestPreview as Record<string, unknown>),
+      responsePreview: sanitizePreview(log.responsePreview as Record<string, unknown>),
+    });
+  });
+
+  // ── Webhooks ──
+  app.get("/api/developer/webhooks", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const hooks = await repo.listWebhooks(userId);
+    return sendOk(reply, hooks.map(mapWebhook));
+  });
+
+  app.post("/api/developer/webhooks", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const input = z.object({
+      url: z.string().url(),
+      events: z.array(z.string()).min(1),
+      appId: z.string().optional(),
+    }).parse(request.body);
+
+    const { webhook, secret } = await repo.createWebhook(userId, input);
+
+    await app.db.auditLog.create({
+      data: {
+        userId,
+        action: "webhook.created",
+        resourceType: "webhook",
+        resourceId: webhook.id,
+        traceId: (request as any).traceId ?? "",
+      },
+    });
+
+    return sendCreated(reply, { ...mapWebhook(webhook), secret });
+  });
+
+  app.patch("/api/developer/webhooks/:id", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const { id } = z.object({ id: z.string() }).parse(request.params);
+    const input = z.object({
+      url: z.string().url().optional(),
+      events: z.array(z.string()).optional(),
+      enabled: z.boolean().optional(),
+      appId: z.string().optional(),
+    }).parse(request.body);
+
+    const updated = await repo.updateWebhook(id, userId, input);
+    if (!updated) return sendError(reply, 404, "WEBHOOK_NOT_FOUND", "Webhook 不存在");
+    return sendOk(reply, mapWebhook(updated));
+  });
+
+  app.delete("/api/developer/webhooks/:id", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const { id } = z.object({ id: z.string() }).parse(request.params);
+
+    const deleted = await repo.deleteWebhook(id, userId);
+    if (!deleted) return sendError(reply, 404, "WEBHOOK_NOT_FOUND", "Webhook 不存在");
+    return sendNoContent(reply);
+  });
+
+  app.post("/api/developer/webhooks/:id/test", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const { id } = z.object({ id: z.string() }).parse(request.params);
+
+    const webhook = await repo.findWebhookById(id, userId);
+    if (!webhook) return sendError(reply, 404, "WEBHOOK_NOT_FOUND", "Webhook 不存在");
+
+    const startTime = Date.now();
+    const events = webhook.events as string[];
+    const testEvent = events[0] ?? "plan.created";
+
+    const delivery = await repo.recordDelivery({
+      webhookId: id,
+      event: testEvent,
+      payload: {
+        type: testEvent,
+        data: { test: true, message: "这是一条测试投递" },
+        timestamp: new Date().toISOString(),
+      },
+      status: "success",
+      responseStatus: 200,
+      latencyMs: Date.now() - startTime,
+    });
+
     return sendOk(reply, delivery);
   });
 
-  app.get("/api/developer/webhooks/:id/deliveries", async (request, reply) => {
+  app.post("/api/developer/webhooks/:id/replay", { preHandler: [app.authGuard] }, async (request, reply) => {
     const userId = uid(request);
     const { id } = z.object({ id: z.string() }).parse(request.params);
 
-    const webhook = await db.webhook.findFirst({ where: { id, userId } });
+    const webhook = await repo.findWebhookById(id, userId);
     if (!webhook) return sendError(reply, 404, "WEBHOOK_NOT_FOUND", "Webhook 不存在");
 
-    const deliveries = await db.webhookDelivery.findMany({
-      where: { webhookId: id },
-      orderBy: { createdAt: "desc" },
-      take: 20,
+    const events = webhook.events as string[];
+    const delivery = await repo.recordDelivery({
+      webhookId: id,
+      event: events[0] ?? "plan.created",
+      payload: { replay: true, timestamp: new Date().toISOString() },
+      status: "success",
+      responseStatus: 200,
     });
+
+    return sendOk(reply, delivery);
+  });
+
+  app.get("/api/developer/webhook-deliveries", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const query = z.object({
+      webhookId: z.string().optional(),
+      limit: z.coerce.number().int().min(1).max(100).default(50),
+    }).parse(request.query);
+
+    if (query.webhookId) {
+      const webhook = await repo.findWebhookById(query.webhookId, userId);
+      if (!webhook) return sendError(reply, 404, "WEBHOOK_NOT_FOUND", "Webhook 不存在");
+      const deliveries = await repo.getDeliveriesByWebhookId(query.webhookId, query.limit);
+      return sendOk(reply, deliveries);
+    }
+
+    const deliveries = await repo.getAllDeliveries(userId, query.limit);
     return sendOk(reply, deliveries);
   });
 
-  // ── Tool Logs (mock data for now) ──
-  app.get("/api/developer/logs", async (request, reply) => {
-    uid(request); // require auth
-    const query = z
-      .object({
-        page: z.coerce.number().int().min(1).default(1),
-        pageSize: z.coerce.number().int().min(1).max(100).default(20),
-      })
-      .parse(request.query);
-    const start = (query.page - 1) * query.pageSize;
-    const items = baseToolLogs.slice(start, start + query.pageSize);
-    return sendOk(reply, { items, total: baseToolLogs.length });
+  app.post("/api/developer/webhooks/:id/rotate-secret", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const { id } = z.object({ id: z.string() }).parse(request.params);
+
+    const result = await repo.rotateWebhookSecret(id, userId);
+    if (!result) return sendError(reply, 404, "WEBHOOK_NOT_FOUND", "Webhook 不存在");
+
+    return sendOk(reply, { ...mapWebhook(result.webhook), secret: result.secret });
+  });
+
+  // ── Sandbox ──
+  app.post("/api/developer/sandbox/run", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+    const input = z.object({
+      endpoint: z.string(),
+      method: z.enum(["GET", "POST"]).default("POST"),
+      body: z.record(z.string(), z.unknown()).optional(),
+    }).parse(request.body);
+
+    const startTime = Date.now();
+    const traceId = (request as any).traceId ?? `sbx_${Date.now()}`;
+
+    try {
+      // 转发到实际业务接口
+      let result: unknown;
+      const body = JSON.stringify(input.body ?? {});
+
+      const response = await app.inject({
+        method: input.method,
+        url: input.endpoint,
+        payload: input.body ?? {},
+        headers: {
+          authorization: request.headers.authorization ?? "",
+          "content-type": "application/json",
+        },
+      });
+
+      const latencyMs = Date.now() - startTime;
+      let responseBody: unknown;
+      try {
+        responseBody = JSON.parse(response.payload);
+      } catch {
+        responseBody = response.payload;
+      }
+
+      // 记录请求日志
+      await repo.createRequestLog(userId, {
+        method: input.method,
+        path: input.endpoint,
+        statusCode: response.statusCode,
+        latencyMs,
+        traceId,
+        requestPreview: sanitizePreview(input.body as Record<string, unknown>),
+        responsePreview: { statusCode: response.statusCode, body: responseBody },
+      });
+
+      return sendOk(reply, {
+        traceId,
+        statusCode: response.statusCode,
+        latencyMs,
+        body: responseBody,
+      });
+    } catch (error) {
+      const latencyMs = Date.now() - startTime;
+      const errorMessage = error instanceof Error ? error.message : "请求失败";
+
+      await repo.createRequestLog(userId, {
+        method: input.method,
+        path: input.endpoint,
+        statusCode: 500,
+        latencyMs,
+        traceId,
+        errorCode: "SANDBOX_ERROR",
+        requestPreview: sanitizePreview(input.body as Record<string, unknown>),
+        responsePreview: { error: errorMessage },
+      });
+
+      return sendOk(reply, {
+        traceId,
+        statusCode: 500,
+        latencyMs,
+        body: { error: errorMessage },
+      });
+    }
+  });
+
+  // ── Security ──
+  app.get("/api/developer/security", { preHandler: [app.authGuard] }, async (request, reply) => {
+    const userId = uid(request);
+
+    const [apiKeys, webhooks, recentAudits] = await Promise.all([
+      repo.listApiKeys(userId),
+      repo.listWebhooks(userId),
+      app.db.auditLog.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        select: { action: true, resourceType: true, createdAt: true, traceId: true },
+      }),
+    ]);
+
+    return sendOk(reply, {
+      activeKeys: apiKeys.filter((k) => k.status === "active").length,
+      totalKeys: apiKeys.length,
+      activeWebhooks: webhooks.filter((w) => w.enabled).length,
+      totalWebhooks: webhooks.length,
+      recentAudits,
+      ipAllowlist: null,
+      ipAllowlistEnabled: false,
+    });
   });
 }
 
@@ -245,6 +493,9 @@ function mapApiKey(key: any) {
     prefix: key.prefix,
     scopes: key.scopes,
     status: key.status,
+    environment: key.environment ?? "sandbox",
+    appId: key.appId,
+    expiresAt: key.expiresAt,
     lastUsedAt: key.lastUsedAt,
     createdAt: key.createdAt,
   };
@@ -254,9 +505,26 @@ function mapWebhook(hook: any) {
   return {
     id: hook.id,
     url: hook.url,
-    event: hook.event,
+    events: hook.events ?? [hook.event],
     enabled: hook.enabled,
+    appId: hook.appId,
     secret: hook.secretHash ? "••••••••" : undefined,
     createdAt: hook.createdAt,
+    updatedAt: hook.updatedAt,
+  };
+}
+
+function mapRequestLog(log: any) {
+  return {
+    id: log.id,
+    method: log.method,
+    path: log.path,
+    statusCode: log.statusCode,
+    latencyMs: log.latencyMs,
+    traceId: log.traceId,
+    errorCode: log.errorCode,
+    apiKeyPrefix: log.apiKeyPrefix,
+    appId: log.appId,
+    createdAt: log.createdAt,
   };
 }

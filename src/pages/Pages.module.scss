@@ -566,14 +566,26 @@
 }
 
 .stat {
+  @include glass.glass-card-base;
+  @include glass.glass-card-content-layer;
   min-width: 0;
   padding: 20px;
-  border: 1px solid var(--color-border);
   border-radius: 20px;
-  background: rgb(var(--color-surface-rgb) / 0.72);
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+.stat::before {
+  @include glass.glass-card-light;
+}
+
+.stat::after {
+  @include glass.glass-card-glow;
+}
+
+.stat:hover {
+  @include glass.glass-card-hover;
 }
 
 .stat strong {
@@ -591,20 +603,28 @@
   font-weight: 900;
 }
 
+.stat em {
+  display: block;
+  margin-top: 2px;
+  color: rgb(var(--color-text-primary-rgb) / 0.4);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
 .demoBoard {
-  position: relative;
+  @include glass.glass-surface;
+  @include glass.glass-card-content-layer;
   z-index: 1;
   min-width: 0;
   min-height: 600px;
   padding: clamp(32px, 4vw, 48px);
-  border: 1px solid var(--color-border);
   border-radius: 32px;
   background:
     linear-gradient(90deg, transparent 0 55%, rgb(var(--color-map-water-rgb) / 0.52) 55% 68%, transparent 68%),
     radial-gradient(circle at 12% 88%, rgb(var(--color-brand-rgb) / 0.22) 0 8rem, transparent 8.5rem),
-    var(--color-panel);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
+    linear-gradient(148deg, rgb(255 255 255 / 0.22) 0%, rgb(255 255 255 / 0.1) 48%, rgb(255 255 255 / 0.05) 100%),
+    rgb(255 255 255 / 0.04);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -616,16 +636,13 @@
 }
 
 .demoBoard::before {
-  content: "";
-  position: absolute;
-  left: 8%;
-  right: 18%;
-  bottom: 16%;
-  height: 8px;
-  border-radius: var(--radius-pill);
-  background: var(--color-brand);
-  transform: rotate(-24deg);
-  box-shadow: 0 0 0 3px rgb(var(--color-text-primary-rgb) / 0.12) inset;
+  @include glass.glass-card-light;
+  z-index: 0;
+}
+
+.demoBoard::after {
+  @include glass.glass-card-glow;
+  z-index: 0;
 }
 
 .demoInput {
@@ -652,16 +669,26 @@
 }
 
 .planCard {
-  position: relative;
+  @include glass.glass-card-base;
+  @include glass.glass-card-content-layer;
   z-index: 2;
   width: 100%;
   max-width: 520px;
   margin: 28px auto 0;
   padding: 24px;
-  border: 1px solid var(--color-border);
   border-radius: 28px;
-  background: rgb(var(--color-surface-rgb) / 0.92);
-  box-shadow: var(--shadow-lg);
+}
+
+.planCard::before {
+  @include glass.glass-card-light;
+}
+
+.planCard::after {
+  @include glass.glass-card-glow;
+}
+
+.planCard:hover {
+  @include glass.glass-card-hover;
 }
 
 .promptBubble {

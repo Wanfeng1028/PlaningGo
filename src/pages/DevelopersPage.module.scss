@@ -1,0 +1,720 @@
+@use "../styles/glass" as *;
+
+// ── 开发者控制台 ──
+
+.developersPage {
+  min-height: 100vh;
+  padding-bottom: 120px;
+}
+
+// ── Hero ──
+
+.hero {
+  padding: 80px 0 48px;
+  text-align: center;
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #b5a58a;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-size: clamp(32px, 5vw, 48px);
+    font-weight: 700;
+    line-height: 1.15;
+    margin: 0 0 16px;
+    background: linear-gradient(135deg, #2d2a26, #5a5248);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #7a7067;
+    max-width: 520px;
+    margin: 0 auto 28px;
+  }
+
+  .heroActions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+
+// ── 状态摘要卡片 ──
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.statCard {
+  @include glass-card-base;
+  padding: 20px;
+  text-align: center;
+
+  .statLabel {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #8a8078;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .statValue {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2d2a26;
+    line-height: 1.2;
+  }
+
+  .statUnit {
+    font-size: 14px;
+    font-weight: 400;
+    color: #8a8078;
+    margin-left: 2px;
+  }
+}
+
+// ── Tab 导航 ──
+
+.tabNav {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+  margin-bottom: 28px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.tabBtn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: #7a7067;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: #2d2a26;
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  &.active {
+    background: #fff;
+    color: #2d2a26;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+}
+
+// ── 内容区块 ──
+
+.section {
+  margin-bottom: 32px;
+
+  .sectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #2d2a26;
+      margin: 0;
+    }
+
+    p {
+      font-size: 13px;
+      color: #8a8078;
+      margin: 0;
+    }
+  }
+}
+
+// ── 卡片通用 ──
+
+.card {
+  @include glass-card-base;
+  padding: 20px;
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    @include glass-card-hover;
+  }
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+// ── API Key 卡片 ──
+
+.apiKeyCard {
+  @include glass-card-base;
+  padding: 20px;
+
+  .keyHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+
+    .keyName {
+      font-size: 15px;
+      font-weight: 600;
+      color: #2d2a26;
+    }
+  }
+
+  .keyPrefix {
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 13px;
+    color: #5a5248;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 4px 10px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+
+  .keyMeta {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: #8a8078;
+    margin-bottom: 12px;
+  }
+
+  .keyActions {
+    display: flex;
+    gap: 8px;
+  }
+}
+
+// ── Webhook 卡片 ──
+
+.webhookCard {
+  @include glass-card-base;
+  padding: 20px;
+
+  .whHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+
+    .whUrl {
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 13px;
+      color: #2d2a26;
+      word-break: break-all;
+    }
+  }
+
+  .whEvents {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .whMeta {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: #8a8078;
+    margin-bottom: 12px;
+  }
+
+  .whActions {
+    display: flex;
+    gap: 8px;
+  }
+}
+
+// ── 徽标/标签 ──
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+
+  &.active {
+    background: rgba(76, 175, 80, 0.12);
+    color: #2e7d32;
+  }
+
+  &.revoked {
+    background: rgba(244, 67, 54, 0.1);
+    color: #c62828;
+  }
+
+  &.disabled {
+    background: rgba(0, 0, 0, 0.06);
+    color: #8a8078;
+  }
+
+  &.expired {
+    background: rgba(255, 152, 0, 0.1);
+    color: #e65100;
+  }
+
+  &.info {
+    background: rgba(33, 150, 243, 0.1);
+    color: #1565c0;
+  }
+}
+
+// ── 请求日志 ──
+
+.logTable {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  th {
+    font-weight: 600;
+    color: #5a5248;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  td {
+    color: #2d2a26;
+  }
+
+  tr:hover td {
+    background: rgba(255, 255, 255, 0.5);
+  }
+}
+
+.statusCode {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-weight: 600;
+
+  &.s2xx {
+    color: #2e7d32;
+  }
+
+  &.s4xx {
+    color: #e65100;
+  }
+
+  &.s5xx {
+    color: #c62828;
+  }
+}
+
+// ── Sandbox ──
+
+.sandbox {
+  @include glass-card-base;
+  padding: 24px;
+
+  .sandboxEditor {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .sandboxPane {
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #5a5248;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.8);
+      resize: vertical;
+      color: #2d2a26;
+
+      &:focus {
+        outline: none;
+        border-color: #ffcc33;
+        box-shadow: 0 0 0 3px rgba(255, 204, 51, 0.15);
+      }
+    }
+  }
+
+  .sandboxResult {
+    pre {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-x: auto;
+      max-height: 360px;
+    }
+  }
+
+  .sandboxMeta {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: #8a8078;
+    margin-top: 8px;
+  }
+}
+
+// ── 文档卡片 ──
+
+.docsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.docCard {
+  @include glass-card-base;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    @include glass-card-hover;
+    transform: translateY(-2px);
+  }
+
+  h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2d2a26;
+    margin: 0 0 6px;
+  }
+
+  p {
+    font-size: 13px;
+    color: #7a7067;
+    line-height: 1.5;
+    margin: 0;
+  }
+}
+
+// ── 安全中心 ──
+
+.securitySection {
+  @include glass-card-base;
+  padding: 24px;
+  margin-bottom: 16px;
+
+  h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2d2a26;
+    margin: 0 0 16px;
+  }
+}
+
+.auditRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 13px;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .auditAction {
+    color: #2d2a26;
+    font-weight: 500;
+  }
+
+  .auditTime {
+    color: #8a8078;
+    font-size: 12px;
+  }
+}
+
+// ── 表单 ──
+
+.formGroup {
+  margin-bottom: 16px;
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #5a5248;
+    margin-bottom: 6px;
+  }
+
+  input,
+  select {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    color: #2d2a26;
+    transition: border-color 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: #ffcc33;
+      box-shadow: 0 0 0 3px rgba(255, 204, 51, 0.15);
+    }
+  }
+}
+
+.checkboxGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 400;
+    color: #2d2a26;
+    cursor: pointer;
+
+    input[type="checkbox"] {
+      width: auto;
+    }
+  }
+}
+
+// ── 工具栏 ──
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+
+  input,
+  select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.8);
+    font-size: 13px;
+    color: #2d2a26;
+
+    &:focus {
+      outline: none;
+      border-color: #ffcc33;
+    }
+  }
+}
+
+// ── 空状态 ──
+
+.emptyState {
+  text-align: center;
+  padding: 48px 20px;
+  color: #8a8078;
+
+  .emptyIcon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #5a5248;
+    margin: 0 0 6px;
+  }
+
+  p {
+    font-size: 13px;
+    margin: 0 0 16px;
+  }
+}
+
+// ── 管道分隔文本 ──
+
+.pipeSep {
+  &::before {
+    content: " | ";
+    color: #ccc;
+  }
+}
+
+// ── 快捷入口卡片 ──
+
+.quickCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.quickCard {
+  @include glass-card-base;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    @include glass-card-hover;
+    transform: translateY(-2px);
+  }
+
+  .qcTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2d2a26;
+    margin-bottom: 4px;
+  }
+
+  .qcDesc {
+    font-size: 12px;
+    color: #8a8078;
+  }
+}
+
+// ── 文档 tab 内代码块 ──
+
+.codeBlock {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  padding: 16px;
+  border-radius: 10px;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-x: auto;
+  margin: 12px 0;
+  position: relative;
+
+  .copyBtn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+}
+
+// ── 分页 ──
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+
+  button {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: #fff;
+    font-size: 13px;
+    color: #2d2a26;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      border-color: #ffcc33;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    &.currentPage {
+      background: #ffcc33;
+      border-color: #ffcc33;
+      font-weight: 600;
+    }
+  }
+}
+
+// ── 加载 ──
+
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #8a8078;
+  font-size: 14px;
+}
+
+// ── 权限 gate ──
+
+.gate {
+  text-align: center;
+  padding: 80px 20px;
+
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2d2a26;
+    margin: 0 0 8px;
+  }
+
+  p {
+    font-size: 14px;
+    color: #7a7067;
+    margin: 0 0 20px;
+  }
+}

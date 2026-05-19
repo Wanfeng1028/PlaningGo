@@ -67,7 +67,35 @@ export interface SessionUser {
   name: string;
   mode: "guest" | "registered";
   city: string;
+  locationLabel?: string;
+  latitude?: number;
+  longitude?: number;
+  locationSource?: "browser" | "manual" | "default";
 }
+
+/** 游客快速画像输入 */
+export interface GuestProfileInput {
+  city: string;
+  startPoint: string;
+  companions: "family" | "friends" | "couple" | "solo";
+  budgetMin: number;
+  budgetMax: number;
+  homeLat?: number;
+  homeLng?: number;
+  locationLabel?: string;
+  locationSource?: "browser" | "manual" | "default";
+}
+
+/** 浏览器定位结果 */
+export interface CurrentLocation {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  label?: string;
+}
+
+/** 定位权限状态 */
+export type LocationPermissionState = "prompt" | "granted" | "denied" | "unavailable" | "loading";
 
 // ── 个人中心类型 ──
 
@@ -75,6 +103,10 @@ export interface PersonaData {
   displayName: string;
   city: string;
   startPoint: string;
+  homeLat?: number;
+  homeLng?: number;
+  locationLabel?: string;
+  locationSource?: "browser" | "manual" | "default";
   secondaryStartPoints: string[];
   favoriteAreas: string[];
   defaultTimeWindow: string;
@@ -176,31 +208,152 @@ export interface SessionInfo {
   current: boolean;
 }
 
-export interface ApiKeyInfo {
+// ── 开发者中心类型 ──
+
+export interface DeveloperApp {
+  id: string;
+  name: string;
+  description: string;
+  environment: string;
+  callbackDomain: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DeveloperApiKey {
   id: string;
   name: string;
   prefix: string;
+  key?: string;
+  scopes: string[];
   status: string;
-  createdAt: string;
+  environment: string;
+  appId: string | null;
+  expiresAt: string | null;
   lastUsedAt: string | null;
+  createdAt: string;
 }
 
-export interface WebhookInfo {
+export interface DeveloperDashboard {
+  summary: {
+    todayCalls: number;
+    monthCalls: number;
+    remainingQuota: number;
+    averageLatencyMs: number;
+    p95LatencyMs: number;
+    errorRate: number;
+    successRate: number;
+    webhookSuccessRate: number;
+    activeKeys: number;
+    activeWebhooks: number;
+    environment: string;
+  };
+  lastSuccess: {
+    path: string;
+    statusCode: number;
+    latencyMs: number;
+    createdAt: string;
+  } | null;
+  lastError: {
+    path: string;
+    statusCode: number;
+    latencyMs: number;
+    errorCode: string | null;
+    createdAt: string;
+  } | null;
+}
+
+export interface DeveloperUsage {
+  todayCalls: number;
+  monthCalls: number;
+  averageLatencyMs: number;
+  p95LatencyMs: number;
+  errorRate: number;
+  successRate: number;
+  breakdown: Array<{ path: string; count: number }>;
+  daily: Array<{
+    id: string;
+    date: string;
+    calls: number;
+    errors: number;
+    avgLatencyMs: number;
+    p95LatencyMs: number;
+  }>;
+}
+
+export interface DeveloperRequestLog {
+  id: string;
+  method: string;
+  path: string;
+  statusCode: number;
+  latencyMs: number;
+  traceId: string;
+  errorCode: string | null;
+  apiKeyPrefix: string;
+  appId: string | null;
+  createdAt: string;
+  requestPreview?: Record<string, unknown>;
+  responsePreview?: Record<string, unknown>;
+}
+
+export interface DeveloperWebhook {
   id: string;
   url: string;
-  event: string;
+  events: string[];
   enabled: boolean;
-  lastDeliveryStatus: string;
+  appId: string | null;
+  secret?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface ToolLogItem {
+export interface WebhookDelivery {
+  id: string;
+  webhookId: string;
+  event: string;
+  payload: Record<string, unknown>;
+  status: string;
+  responseStatus: number | null;
+  latencyMs: number | null;
+  errorMessage: string | null;
+  attemptCount: number;
+  createdAt: string;
+}
+
+export interface DeveloperSecurity {
+  activeKeys: number;
+  totalKeys: number;
+  activeWebhooks: number;
+  totalWebhooks: number;
+  recentAudits: Array<{
+    action: string;
+    resourceType: string;
+    createdAt: string;
+    traceId: string;
+  }>;
+  ipAllowlist: string[] | null;
+  ipAllowlistEnabled: boolean;
+}
+
+export interface DeveloperSandboxResult {
+  traceId: string;
+  statusCode: number;
+  latencyMs: number;
+  body: unknown;
+}
+
+// 兼容旧类型
+export type ApiKeyInfo = DeveloperApiKey;
+export type WebhookInfo = DeveloperWebhook;
+export type ToolLogItem = {
   id: string;
   traceId: string;
   toolName: string;
   status: string;
   latencyMs: number;
   createdAt: string;
-}
+};
 
 export interface ProfileStats {
   planCount: number;

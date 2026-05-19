@@ -38,6 +38,7 @@ export async function registerRoutes(app: FastifyInstance) {
   await import("./routes/calendar.js").then((m) => m.registerCalendarRoutes(app));
   await import("./routes/agent.js").then((m) => m.registerAgentRoutes(app));
   await import("./routes/mock.js").then((m) => m.registerMockRoutes(app));
+  await import("./routes/location.js").then((m) => m.registerLocationRoutes(app));
 
   app.get("/api/health", async () => ({
     ok: true,

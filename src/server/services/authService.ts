@@ -80,28 +80,41 @@ export class AuthService {
   }
 
   /**
-   * Guest 快速体验
+   * Guest 快速体验 — 支持完整画像字段
    */
   async guestLogin(
     meta?: { userAgent?: string; ipAddress?: string },
+    profile?: {
+      city?: string;
+      startPoint?: string;
+      companions?: string;
+      budgetMin?: number;
+      budgetMax?: number;
+      homeLat?: number;
+      homeLng?: number;
+      locationLabel?: string;
+      locationSource?: string;
+    },
   ): Promise<{ user: { id: string; email: string; displayName: string; role: string } } & TokenPair> {
     const guestId = randomUUID();
     const guestEmail = `guest-${guestId.slice(0, 8)}@planninggo.local`;
 
     const user = await this.userRepo.create({
       email: guestEmail,
-      displayName: "体验用户",
+      displayName: profile?.locationLabel ?? "体验用户",
       role: "user",
       mode: "guest",
     });
 
     await Promise.all([
       this.profileRepo.upsert(user.id, {
-        city: "北京",
-        startPoint: "家附近",
-        companions: "family",
-        budgetMin: 200,
-        budgetMax: 300,
+        city: profile?.city ?? "北京",
+        startPoint: profile?.startPoint ?? "家附近",
+        companions: profile?.companions ?? "family",
+        budgetMin: profile?.budgetMin ?? 200,
+        budgetMax: profile?.budgetMax ?? 300,
+        homeLat: profile?.homeLat,
+        homeLng: profile?.homeLng,
       }),
       this.profileRepo.upsertPermissions(user.id, {}),
     ]);

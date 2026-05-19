@@ -25,6 +25,18 @@ const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
+const guestProfileSchema = z.object({
+  city: z.string().optional(),
+  startPoint: z.string().optional(),
+  companions: z.enum(["family", "friends", "couple", "solo"]).optional(),
+  budgetMin: z.number().int().optional(),
+  budgetMax: z.number().int().optional(),
+  homeLat: z.number().optional(),
+  homeLng: z.number().optional(),
+  locationLabel: z.string().optional(),
+  locationSource: z.enum(["browser", "manual", "default"]).optional(),
+}).optional();
+
 const changePasswordSchema = z.object({
   oldPassword: z.string().min(1),
   newPassword: z.string().min(6),
@@ -59,7 +71,8 @@ export async function registerAuthRoutes(app: FastifyInstance) {
 
   // ── POST /api/auth/guest ──
   app.post("/api/auth/guest", async (request, reply) => {
-    const result = await authService.guestLogin(getClientMeta(request));
+    const profile = guestProfileSchema.parse(request.body) ?? undefined;
+    const result = await authService.guestLogin(getClientMeta(request), profile);
     return sendCreated(reply, result);
   });
 
