@@ -1,172 +1,337 @@
-@use "../styles/glass" as *;
+@use "../styles/glass" as glass;
 
-// ── 开发者控制台 ──
+/* ═══════════════════════════════════════════════════════════════════════════
+   DevelopersPage — PlanningGo SaaS Developer Console
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 .developersPage {
   min-height: 100vh;
-  padding-bottom: 120px;
+  padding-bottom: 80px;
+  width: min(1340px, calc(100vw - 48px));
+  margin: 0 auto;
 }
 
-// ── Hero ──
+/* ── Hero ────────────────────────────────────────────────────────────── */
 
 .hero {
-  padding: 80px 0 48px;
-  text-align: center;
-
-  .eyebrow {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: #b5a58a;
-    margin-bottom: 12px;
-  }
-
-  h1 {
-    font-size: clamp(32px, 5vw, 48px);
-    font-weight: 700;
-    line-height: 1.15;
-    margin: 0 0 16px;
-    background: linear-gradient(135deg, #2d2a26, #5a5248);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .subtitle {
-    font-size: 16px;
-    line-height: 1.6;
-    color: #7a7067;
-    max-width: 520px;
-    margin: 0 auto 28px;
-  }
-
-  .heroActions {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-}
-
-// ── 状态摘要卡片 ──
-
-.statsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  margin-bottom: 32px;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: center;
+  padding: 32px 0 28px;
+  min-height: auto;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
 }
 
-.statCard {
-  @include glass-card-base;
-  padding: 20px;
+.heroLeft {
+  min-width: 0;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: var(--color-brand);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.heroTitle {
+  font-size: clamp(22px, 3.5vw, 30px);
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--color-text-primary);
+  margin: 0 0 8px;
+}
+
+.heroSub {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+  max-width: 520px;
+  margin: 0;
+}
+
+.heroRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+
+  @media (max-width: 768px) {
+    align-items: flex-start;
+  }
+}
+
+.heroStatus {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 700;
+}
+
+.heroStatusDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.dotGreen {
+  background: #27ae60;
+  box-shadow: 0 0 6px rgb(39 174 96 / 0.4);
+}
+
+.heroCtas {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.heroBtn {
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out), background 180ms var(--ease-out);
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.heroBtnDark {
+  background: var(--color-text-primary);
+  color: var(--color-text-inverse);
+}
+
+.heroBtnBrand {
+  background: var(--color-brand);
+  color: var(--color-text-primary);
+}
+
+.heroBtnGhost {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+
+  &:hover {
+    background: var(--color-surface-warm);
+  }
+}
+
+/* ── Metric Cards ────────────────────────────────────────────────────── */
+
+.metricsRow {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+.metricCard {
+  @include glass.glass-card-base;
+  border-radius: 18px;
+  padding: 16px 18px;
   text-align: center;
 
-  .statLabel {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    color: #8a8078;
-    text-transform: uppercase;
-    margin-bottom: 8px;
+  &::before {
+    @include glass.glass-card-light;
   }
 
-  .statValue {
-    font-size: 28px;
-    font-weight: 700;
-    color: #2d2a26;
-    line-height: 1.2;
+  &::after {
+    @include glass.glass-card-glow;
   }
 
-  .statUnit {
-    font-size: 14px;
-    font-weight: 400;
-    color: #8a8078;
-    margin-left: 2px;
+  &:hover {
+    @include glass.glass-card-hover;
   }
 }
 
-// ── Tab 导航 ──
+.metricLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
 
-.tabNav {
+.metricValue {
+  font-family: var(--font-number);
+  font-size: clamp(22px, 2.5vw, 28px);
+  font-weight: 900;
+  color: var(--color-text-primary);
+  line-height: 1.1;
+}
+
+.metricUnit {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-left: 2px;
+}
+
+/* ── Console Layout ──────────────────────────────────────────────────── */
+
+.consoleLayout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 20px;
+  min-height: 600px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.consoleSider {
+  @include glass.glass-surface;
+  border-radius: 20px;
+  padding: 8px;
+  height: fit-content;
+  position: sticky;
+  top: 80px;
+
+  @media (max-width: 900px) {
+    position: static;
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 4px;
+    padding: 6px;
+    border-radius: 16px;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
+.siderItem {
   display: flex;
-  gap: 4px;
-  padding: 4px;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(8px);
-  margin-bottom: 28px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-.tabBtn {
-  padding: 10px 18px;
-  border-radius: 10px;
   border: none;
   background: transparent;
+  color: var(--color-text-secondary);
   font-size: 13px;
-  font-weight: 500;
-  color: #7a7067;
+  font-weight: 700;
   cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: background 180ms var(--ease-out), color 180ms var(--ease-out);
   white-space: nowrap;
-  transition: all 0.2s ease;
 
   &:hover {
-    color: #2d2a26;
-    background: rgba(255, 255, 255, 0.6);
+    background: rgb(var(--color-brand-rgb) / 0.1);
+    color: var(--color-text-primary);
   }
 
-  &.active {
-    background: #fff;
-    color: #2d2a26;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  &.siderActive {
+    background: var(--color-brand);
+    color: var(--color-text-primary);
+    font-weight: 800;
+    box-shadow: var(--shadow-xs);
   }
-}
 
-// ── 内容区块 ──
-
-.section {
-  margin-bottom: 32px;
-
-  .sectionHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-    gap: 12px;
-    flex-wrap: wrap;
-
-    h3 {
-      font-size: 18px;
-      font-weight: 600;
-      color: #2d2a26;
-      margin: 0;
-    }
-
-    p {
-      font-size: 13px;
-      color: #8a8078;
-      margin: 0;
-    }
+  @media (max-width: 900px) {
+    padding: 8px 14px;
+    font-size: 12px;
+    width: auto;
+    flex-shrink: 0;
   }
 }
 
-// ── 卡片通用 ──
+.siderIcon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.consoleMain {
+  min-width: 0;
+}
+
+/* ── Section Headers ─────────────────────────────────────────────────── */
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  h3 {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+}
+
+.sectionDesc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* ── Glass Cards ─────────────────────────────────────────────────────── */
 
 .card {
-  @include glass-card-base;
+  @include glass.glass-card-base;
+  border-radius: 20px;
   padding: 20px;
-  transition: box-shadow 0.2s ease;
+
+  &::before {
+    @include glass.glass-card-light;
+  }
+
+  &::after {
+    @include glass.glass-card-glow;
+  }
 
   &:hover {
-    @include glass-card-hover;
+    @include glass.glass-card-hover;
   }
 }
 
@@ -176,329 +341,766 @@
   gap: 16px;
 }
 
-// ── API Key 卡片 ──
+.cardCompact {
+  @include glass.glass-card-base;
+  border-radius: 16px;
+  padding: 16px;
 
-.apiKeyCard {
-  @include glass-card-base;
-  padding: 20px;
-
-  .keyHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-
-    .keyName {
-      font-size: 15px;
-      font-weight: 600;
-      color: #2d2a26;
-    }
-  }
-
-  .keyPrefix {
-    font-family: "SF Mono", "Fira Code", monospace;
-    font-size: 13px;
-    color: #5a5248;
-    background: rgba(0, 0, 0, 0.04);
-    padding: 4px 10px;
-    border-radius: 6px;
-    display: inline-block;
-    margin-bottom: 8px;
-  }
-
-  .keyMeta {
-    display: flex;
-    gap: 16px;
-    font-size: 12px;
-    color: #8a8078;
-    margin-bottom: 12px;
-  }
-
-  .keyActions {
-    display: flex;
-    gap: 8px;
+  &::before {
+    @include glass.glass-card-light;
   }
 }
 
-// ── Webhook 卡片 ──
+/* ── Overview Panels ─────────────────────────────────────────────────── */
 
-.webhookCard {
-  @include glass-card-base;
-  padding: 20px;
+.overviewGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
 
-  .whHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-
-    .whUrl {
-      font-family: "SF Mono", "Fira Code", monospace;
-      font-size: 13px;
-      color: #2d2a26;
-      word-break: break-all;
-    }
-  }
-
-  .whEvents {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
-  }
-
-  .whMeta {
-    display: flex;
-    gap: 16px;
-    font-size: 12px;
-    color: #8a8078;
-    margin-bottom: 12px;
-  }
-
-  .whActions {
-    display: flex;
-    gap: 8px;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
   }
 }
 
-// ── 徽标/标签 ──
+.healthList {
+  display: grid;
+  gap: 10px;
+}
+
+.healthRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgb(var(--color-border-rgb) / 0.5);
+  font-size: 13px;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.healthLabel {
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.healthValue {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.quickActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.quickActionBtn {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 180ms var(--ease-out), border-color 180ms var(--ease-out), transform 180ms var(--ease-out);
+
+  &:hover {
+    background: var(--color-surface-warm);
+    border-color: rgb(var(--color-brand-rgb) / 0.4);
+    transform: translateY(-1px);
+  }
+}
+
+.eventList {
+  display: grid;
+  gap: 4px;
+}
+
+.eventRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: rgb(var(--color-surface-rgb) / 0.6);
+  font-size: 13px;
+  transition: background 180ms var(--ease-out);
+
+  &:hover {
+    background: rgb(var(--color-brand-rgb) / 0.08);
+  }
+}
+
+.eventDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.eventName {
+  font-family: var(--font-number);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-size: 12px;
+}
+
+.eventTime {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.stepList {
+  display: grid;
+  gap: 8px;
+}
+
+.stepRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgb(var(--color-surface-rgb) / 0.6);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.stepNum {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.stepDone .stepNum {
+  background: #27ae60;
+  color: #fff;
+}
+
+/* ── Badge / Tag ─────────────────────────────────────────────────────── */
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 6px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 8px;
+  white-space: nowrap;
 
   &.active {
-    background: rgba(76, 175, 80, 0.12);
-    color: #2e7d32;
+    background: rgb(39 174 96 / 0.12);
+    color: #21884a;
   }
 
   &.revoked {
-    background: rgba(244, 67, 54, 0.1);
-    color: #c62828;
+    background: rgb(217 74 56 / 0.1);
+    color: #c0392b;
   }
 
   &.disabled {
-    background: rgba(0, 0, 0, 0.06);
-    color: #8a8078;
+    background: rgb(0 0 0 / 0.06);
+    color: var(--color-text-secondary);
   }
 
   &.expired {
-    background: rgba(255, 152, 0, 0.1);
+    background: rgb(255 152 0 / 0.1);
     color: #e65100;
   }
 
   &.info {
-    background: rgba(33, 150, 243, 0.1);
+    background: rgb(33 150 243 / 0.1);
     color: #1565c0;
+  }
+
+  &.warn {
+    background: rgb(255 152 0 / 0.12);
+    color: #e65100;
   }
 }
 
-// ── 请求日志 ──
+/* ── Data Table ──────────────────────────────────────────────────────── */
 
-.logTable {
+.tableWrap {
+  @include glass.glass-surface;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.dataTable {
   width: 100%;
   border-collapse: collapse;
 
   th,
   td {
-    padding: 10px 12px;
+    padding: 10px 14px;
     text-align: left;
     font-size: 13px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid rgb(var(--color-border-rgb) / 0.4);
   }
 
   th {
-    font-weight: 600;
-    color: #5a5248;
+    font-weight: 700;
+    color: var(--color-text-secondary);
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
+    background: rgb(var(--color-surface-rgb) / 0.5);
   }
 
   td {
-    color: #2d2a26;
+    color: var(--color-text-primary);
+    font-weight: 600;
   }
 
-  tr:hover td {
-    background: rgba(255, 255, 255, 0.5);
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr {
+    cursor: default;
+    transition: background 150ms var(--ease-out);
+
+    &.clickable {
+      cursor: pointer;
+
+      &:hover td {
+        background: rgb(var(--color-brand-rgb) / 0.06);
+      }
+    }
   }
 }
 
 .statusCode {
-  font-family: "SF Mono", "Fira Code", monospace;
-  font-weight: 600;
+  font-family: var(--font-number);
+  font-weight: 800;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 6px;
 
   &.s2xx {
-    color: #2e7d32;
+    background: rgb(39 174 96 / 0.1);
+    color: #21884a;
   }
 
   &.s4xx {
+    background: rgb(255 152 0 / 0.1);
     color: #e65100;
   }
 
   &.s5xx {
-    color: #c62828;
+    background: rgb(217 74 56 / 0.1);
+    color: #c0392b;
   }
 }
 
-// ── Sandbox ──
+/* ── Toolbar / Filters ───────────────────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+
+  input,
+  select {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-brand);
+      box-shadow: 0 0 0 3px rgb(var(--color-brand-rgb) / 0.15);
+    }
+  }
+}
+
+/* ── API Key Card ────────────────────────────────────────────────────── */
+
+.apiKeyCard {
+  @include glass.glass-card-base;
+  border-radius: 18px;
+  padding: 18px;
+
+  &::before {
+    @include glass.glass-card-light;
+  }
+}
+
+.keyHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.keyName {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+}
+
+.keyPrefix {
+  font-family: var(--font-number);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: rgb(0 0 0 / 0.04);
+  padding: 3px 10px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.keyMeta {
+  display: flex;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.keyActions {
+  display: flex;
+  gap: 6px;
+}
+
+/* ── Webhook Card ────────────────────────────────────────────────────── */
+
+.webhookCard {
+  @include glass.glass-card-base;
+  border-radius: 18px;
+  padding: 18px;
+
+  &::before {
+    @include glass.glass-card-light;
+  }
+}
+
+.whHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.whUrl {
+  font-family: var(--font-number);
+  font-size: 12px;
+  color: var(--color-text-primary);
+  word-break: break-all;
+  font-weight: 700;
+}
+
+.whEvents {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.whMeta {
+  display: flex;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.whActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ── Sandbox ─────────────────────────────────────────────────────────── */
 
 .sandbox {
-  @include glass-card-base;
-  padding: 24px;
+  @include glass.glass-card-base;
+  border-radius: 20px;
+  padding: 20px;
 
-  .sandboxEditor {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 16px;
-
-    @media (max-width: 768px) {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .sandboxPane {
-    label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: #5a5248;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 180px;
-      font-family: "SF Mono", "Fira Code", monospace;
-      font-size: 13px;
-      line-height: 1.5;
-      padding: 14px;
-      border-radius: 10px;
-      border: 1px solid rgba(0, 0, 0, 0.1);
-      background: rgba(255, 255, 255, 0.8);
-      resize: vertical;
-      color: #2d2a26;
-
-      &:focus {
-        outline: none;
-        border-color: #ffcc33;
-        box-shadow: 0 0 0 3px rgba(255, 204, 51, 0.15);
-      }
-    }
-  }
-
-  .sandboxResult {
-    pre {
-      background: #1e1e2e;
-      color: #cdd6f4;
-      padding: 16px;
-      border-radius: 10px;
-      font-size: 13px;
-      line-height: 1.5;
-      overflow-x: auto;
-      max-height: 360px;
-    }
-  }
-
-  .sandboxMeta {
-    display: flex;
-    gap: 16px;
-    font-size: 12px;
-    color: #8a8078;
-    margin-top: 8px;
+  &::before {
+    @include glass.glass-card-light;
   }
 }
 
-// ── 文档卡片 ──
+.sandboxEditor {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 14px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sandboxPane {
+  display: flex;
+  flex-direction: column;
+
+  > label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 8px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 200px;
+    font-family: var(--font-number);
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    resize: vertical;
+    color: var(--color-text-primary);
+    box-sizing: border-box;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-brand);
+      box-shadow: 0 0 0 3px rgb(var(--color-brand-rgb) / 0.15);
+    }
+  }
+}
+
+.sandboxResult {
+  pre {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-x: auto;
+    max-height: 360px;
+    font-family: var(--font-number);
+  }
+}
+
+.sandboxMeta {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+.sandboxActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sandboxEndpoint {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+
+  select,
+  input {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-brand);
+    }
+  }
+
+  select {
+    width: 90px;
+  }
+
+  input {
+    flex: 1;
+    font-family: var(--font-number);
+  }
+}
+
+/* ── Docs ────────────────────────────────────────────────────────────── */
 
 .docsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  gap: 14px;
 }
 
 .docCard {
-  @include glass-card-base;
-  padding: 20px;
+  @include glass.glass-card-base;
+  border-radius: 18px;
+  padding: 18px;
   cursor: pointer;
-  transition: all 0.2s ease;
+
+  &::before {
+    @include glass.glass-card-light;
+  }
 
   &:hover {
-    @include glass-card-hover;
+    @include glass.glass-card-hover;
     transform: translateY(-2px);
   }
 
   h4 {
-    font-size: 15px;
-    font-weight: 600;
-    color: #2d2a26;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--color-text-primary);
     margin: 0 0 6px;
   }
 
   p {
-    font-size: 13px;
-    color: #7a7067;
-    line-height: 1.5;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
     margin: 0;
   }
 }
 
-// ── 安全中心 ──
+.codeBlock {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  padding: 16px;
+  border-radius: 14px;
+  font-family: var(--font-number);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-x: auto;
+  position: relative;
+  margin: 8px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
 
-.securitySection {
-  @include glass-card-base;
-  padding: 24px;
-  margin-bottom: 16px;
+  .copyBtn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+}
+
+.docSection {
+  margin-bottom: 20px;
 
   h4 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #2d2a26;
-    margin: 0 0 16px;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin: 0 0 8px;
   }
+
+  p {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.65;
+    margin: 0 0 10px;
+  }
+}
+
+/* ── Security ────────────────────────────────────────────────────────── */
+
+.securityGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.securitySection {
+  @include glass.glass-card-base;
+  border-radius: 18px;
+  padding: 20px;
+
+  &::before {
+    @include glass.glass-card-light;
+  }
+
+  h4 {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin: 0 0 14px;
+  }
+}
+
+.securityTip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  line-height: 1.5;
+  border-bottom: 1px solid rgb(var(--color-border-rgb) / 0.4);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.securityTipIcon {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .auditRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 9px 0;
+  border-bottom: 1px solid rgb(var(--color-border-rgb) / 0.4);
   font-size: 13px;
 
   &:last-child {
     border-bottom: none;
   }
+}
 
-  .auditAction {
-    color: #2d2a26;
-    font-weight: 500;
+.auditAction {
+  color: var(--color-text-primary);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.auditTime {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.dangerZone {
+  border-color: rgb(var(--color-danger-rgb) / 0.25);
+  background:
+    linear-gradient(148deg, rgb(var(--color-danger-rgb) / 0.03) 0%, transparent 100%),
+    rgb(255 255 255 / 0.04);
+}
+
+/* ── Usage ───────────────────────────────────────────────────────────── */
+
+.usageBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.usageBarTrack {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.06);
+  overflow: hidden;
+}
+
+.usageBarFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-brand);
+  transition: width 400ms var(--ease-out);
+}
+
+.usageBarLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  min-width: 80px;
+}
+
+.usageBarValue {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  min-width: 40px;
+  text-align: right;
+}
+
+.rangeBtns {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgb(0 0 0 / 0.04);
+}
+
+.rangeBtn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 150ms var(--ease-out);
+
+  &.rangeActive {
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-xs);
   }
 
-  .auditTime {
-    color: #8a8078;
-    font-size: 12px;
+  &:hover:not(.rangeActive) {
+    color: var(--color-text-primary);
   }
 }
 
-// ── 表单 ──
+/* ── Form ────────────────────────────────────────────────────────────── */
 
 .formGroup {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 
   label {
     display: block;
-    font-size: 13px;
-    font-weight: 600;
-    color: #5a5248;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-text-secondary);
     margin-bottom: 6px;
   }
 
@@ -506,17 +1108,18 @@
   select {
     width: 100%;
     padding: 10px 14px;
-    border-radius: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
     font-size: 14px;
-    color: #2d2a26;
-    transition: border-color 0.2s ease;
+    color: var(--color-text-primary);
+    box-sizing: border-box;
+    transition: border-color 200ms var(--ease-out);
 
     &:focus {
       outline: none;
-      border-color: #ffcc33;
-      box-shadow: 0 0 0 3px rgba(255, 204, 51, 0.15);
+      border-color: var(--color-brand);
+      box-shadow: 0 0 0 3px rgb(var(--color-brand-rgb) / 0.15);
     }
   }
 }
@@ -531,190 +1134,322 @@
     align-items: center;
     gap: 6px;
     font-size: 13px;
-    font-weight: 400;
-    color: #2d2a26;
+    font-weight: 600;
+    color: var(--color-text-primary);
     cursor: pointer;
 
     input[type="checkbox"] {
       width: auto;
+      accent-color: var(--color-brand);
     }
   }
 }
 
-// ── 工具栏 ──
+/* ── Modal Overlay ───────────────────────────────────────────────────── */
 
-.toolbar {
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.35);
+  backdrop-filter: blur(6px);
+  animation: modalFadeIn 200ms var(--ease-out);
+}
 
-  input,
-  select {
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    background: rgba(255, 255, 255, 0.8);
-    font-size: 13px;
-    color: #2d2a26;
+.modalContent {
+  @include glass.glass-card-base;
+  border-radius: 24px;
+  padding: 28px;
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  background: var(--color-surface);
 
-    &:focus {
-      outline: none;
-      border-color: #ffcc33;
-    }
+  &::before {
+    @include glass.glass-card-light;
   }
 }
 
-// ── 空状态 ──
+.modalTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin: 0 0 20px;
+}
+
+.modalActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.createdKeyBox {
+  background: rgb(var(--color-brand-rgb) / 0.08);
+  border: 1px solid rgb(var(--color-brand-rgb) / 0.25);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.createdKeyLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+}
+
+.createdKeyValue {
+  font-family: var(--font-number);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  background: #1e1e2e;
+  color-scheme: dark;
+  padding: 10px 14px;
+  border-radius: 10px;
+  word-break: break-all;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  line-height: 1.5;
+}
+
+.createdKeyWarning {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+/* ── Empty State ─────────────────────────────────────────────────────── */
 
 .emptyState {
   text-align: center;
-  padding: 48px 20px;
-  color: #8a8078;
+  padding: 40px 20px;
+  color: var(--color-text-secondary);
 
   .emptyIcon {
-    font-size: 32px;
-    margin-bottom: 12px;
-    opacity: 0.5;
+    font-size: 28px;
+    margin-bottom: 10px;
+    opacity: 0.6;
   }
 
   h4 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #5a5248;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-text-primary);
     margin: 0 0 6px;
   }
 
   p {
     font-size: 13px;
-    margin: 0 0 16px;
+    margin: 0 0 14px;
+    line-height: 1.5;
   }
 }
 
-// ── 管道分隔文本 ──
+/* ── Flash Messages ──────────────────────────────────────────────────── */
 
-.pipeSep {
-  &::before {
-    content: " | ";
-    color: #ccc;
-  }
-}
-
-// ── 快捷入口卡片 ──
-
-.quickCards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
-  margin-bottom: 32px;
-}
-
-.quickCard {
-  @include glass-card-base;
-  padding: 20px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    @include glass-card-hover;
-    transform: translateY(-2px);
-  }
-
-  .qcTitle {
-    font-size: 14px;
-    font-weight: 600;
-    color: #2d2a26;
-    margin-bottom: 4px;
-  }
-
-  .qcDesc {
-    font-size: 12px;
-    color: #8a8078;
-  }
-}
-
-// ── 文档 tab 内代码块 ──
-
-.codeBlock {
-  background: #1e1e2e;
-  color: #cdd6f4;
-  padding: 16px;
-  border-radius: 10px;
-  font-family: "SF Mono", "Fira Code", monospace;
+.flash {
+  padding: 10px 16px;
+  border-radius: 12px;
   font-size: 13px;
-  line-height: 1.6;
-  overflow-x: auto;
-  margin: 12px 0;
-  position: relative;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
 
-  .copyBtn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
+.flashSuccess {
+  background: rgb(39 174 96 / 0.1);
+  color: #21884a;
+}
+
+.flashError {
+  background: rgb(217 74 56 / 0.1);
+  color: #c0392b;
+}
+
+/* ── Log Detail Drawer ───────────────────────────────────────────────── */
+
+.logDetail {
+  padding: 12px 0;
+}
+
+.logDetailRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.logDetailLabel {
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.logDetailValue {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+/* ── Delivery List ───────────────────────────────────────────────────── */
+
+.deliveryList {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgb(var(--color-border-rgb) / 0.5);
+}
+
+.deliveryTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+}
+
+.deliveryRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid rgb(var(--color-border-rgb) / 0.3);
+
+  &:last-child {
+    border-bottom: none;
   }
 }
 
-// ── 分页 ──
+/* ── Pagination ──────────────────────────────────────────────────────── */
 
 .pagination {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-top: 20px;
+  gap: 6px;
+  margin-top: 16px;
 
   button {
     padding: 6px 14px;
     border-radius: 8px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    background: #fff;
-    font-size: 13px;
-    color: #2d2a26;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-text-primary);
     cursor: pointer;
 
     &:hover:not(:disabled) {
-      border-color: #ffcc33;
+      border-color: var(--color-brand);
+      background: var(--color-surface-warm);
     }
 
     &:disabled {
-      opacity: 0.4;
+      opacity: 0.35;
       cursor: default;
     }
+  }
+}
 
-    &.currentPage {
-      background: #ffcc33;
-      border-color: #ffcc33;
-      font-weight: 600;
+.pageNum {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  background: var(--color-brand);
+  border-radius: 8px;
+}
+
+/* ── Pipe Separator ──────────────────────────────────────────────────── */
+
+.pipeSep {
+  &::before {
+    content: " \00B7 ";
+    color: rgb(var(--color-text-secondary-rgb) / 0.5);
+  }
+}
+
+/* ── Utility ─────────────────────────────────────────────────────────── */
+
+.mono {
+  font-family: var(--font-number);
+}
+
+.textMuted {
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.mb16 {
+  margin-bottom: 16px;
+}
+
+.mb20 {
+  margin-bottom: 20px;
+}
+
+/* ── Modal fade animation ────────────────────────────────────────────── */
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Responsive tweaks ───────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .developersPage {
+    width: calc(100vw - 24px);
+  }
+
+  .metricsRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .securityGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .quickActions {
+    grid-template-columns: 1fr;
+  }
+
+  .sandboxEditor {
+    grid-template-columns: 1fr;
+  }
+
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .docsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .heroCtas {
+    width: 100%;
+
+    .heroBtn {
+      flex: 1;
+      justify-content: center;
     }
-  }
-}
-
-// ── 加载 ──
-
-.loading {
-  text-align: center;
-  padding: 60px 20px;
-  color: #8a8078;
-  font-size: 14px;
-}
-
-// ── 权限 gate ──
-
-.gate {
-  text-align: center;
-  padding: 80px 20px;
-
-  h3 {
-    font-size: 20px;
-    font-weight: 600;
-    color: #2d2a26;
-    margin: 0 0 8px;
-  }
-
-  p {
-    font-size: 14px;
-    color: #7a7067;
-    margin: 0 0 20px;
   }
 }

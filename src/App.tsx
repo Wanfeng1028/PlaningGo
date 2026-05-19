@@ -4,7 +4,6 @@ import { BottomTabs } from "./components/BottomTabs";
 import { Modal } from "./components/Modal";
 import { NavBar } from "./components/NavBar";
 import { PageTransition } from "./components/PageTransition";
-import { designHighlights } from "./data/content";
 import { setAuthToken, reverseGeocode } from "./lib/api";
 import { requestBrowserLocation } from "./lib/location";
 import type { ModalKey, NavKey, SessionUser } from "./types";
@@ -106,16 +105,13 @@ export function App() {
         return <FeaturesPage onOpenModal={openModal} />;
 
       case "cases":
-        return <CasesPage />;
+        return <CasesPage onOpenModal={openModal} onNavigate={setActive} />;
 
       case "design":
         return (
           <FlowPage
-            blocks={designHighlights}
-            eyebrow="设计亮点"
-            title="设计系统也成为可浏览页面"
-            intro="颜色字体、底图、组件、弹窗、状态、导航一致性和数据矩阵全部按最终导航组织。"
             onOpenModal={openModal}
+            onNavigate={setActive}
           />
         );
 
